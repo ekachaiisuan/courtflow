@@ -8,6 +8,18 @@
 -	public/: static assets
 ให้ใช้ alias @/* สำหรับ import (ตั้งค่าไว้ใน tsconfig.json)
 
+# Stack Used
+- NextJS16
+- Better-auth
+- Arcjet
+- Shadcn
+- Drizzle
+- Neon
+- TRPC
+- Tanstack Query
+- Pragmatic DnD
+
+
 # Build, Test และ Development Commands
 ใช้ pnpm (lockfile: pnpm-lock.yaml)
 -	pnpm install: ติดตั้ง dependencies
@@ -64,6 +76,10 @@
  - ห้าม query database จาก Client Component
  - Business logic และ access control ต้องอยู่ฝั่ง server เท่านั้น
  - หลีกเลี่ยงการเขียน logic ซ้ำ โดยแยก reusable logic ไว้ใน lib/ หรือ server/
+
+ ## Project Trello Clone
+ - อยากให้เป็นกระดานที่ทำงานร่วมกัน
+ - เป็น platform ที่ทำให้เกิดการประสานงานในองค์กร
 
 # Authentication (Better Auth)
 - ใช้ Better Auth เป็นแหล่งข้อมูล session เพียงแหล่งเดียว
