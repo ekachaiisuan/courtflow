@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/sidebar';
 import { authClient } from '@/lib/auth-client';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 export function NavUser({
   user,
@@ -40,6 +41,30 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
 
+  function getInitials(name?: string) {
+    if (!name) return '';
+
+    const words = name.trim().split(' ');
+
+    if (words.length === 1) {
+      return words[0].slice(0, 2).toUpperCase();
+    }
+
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }
+
+  async function handleSignOut() {
+    await authClient.signOut(undefined, {
+      onSuccess: () => {
+        router.replace('/login');
+        router.refresh();
+      },
+      onError: (ctx) => {
+        toast.error(ctx.error?.message || 'Failed to sign out');
+      },
+    });
+  }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -51,7 +76,7 @@ export function NavUser({
             >
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+               <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -70,7 +95,7 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  <AvatarFallback className="rounded-lg">{getInitials(user.name)}</AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -101,15 +126,9 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => authClient.signOut({
-              fetchOptions: {
-                onSuccess: () => {
-                  router.push('/');
-                }
-              }
-            })}>
-                <LogOut />
-                Log out
+            <DropdownMenuItem onSelect={handleSignOut}>
+              <LogOut />
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

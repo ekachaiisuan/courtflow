@@ -24,11 +24,13 @@ export const BoardCreateForm = () => {
   return (
     <Form {...form}>
       <form className="space-y-4" onSubmit={form.handleSubmit(onSubmit)}>
-        {/* <FormField
+        <FormField
           control={form.control}
           name="name"
-          render={({ field }) => ()}
-        /> */}
+          render={({ field }) => (
+            <FormInput {...field} id="name" label="Board Name" />
+          )}
+        />
         <FormSubmit>Create New</FormSubmit>
       </form>
     </Form>

@@ -41,7 +41,22 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           {label}
         </FormLabel>
       ) : null}
-      <Input className={cn("h-7 px-2 py-1 text-sm")} />
+      <Input
+        className={cn("h-7 px-2 py-1 text-sm", className)}
+        defaultValue={defaultValue}
+        disabled={disabled}
+        id={id}
+        name={name}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        onChange={(e)=>onChange?.(e.target.value)}
+        placeholder={placeholder}
+        ref={ref}
+        required={required}
+        value={value}
+      />
     </FormItem>
   ),
 );
+
+FormInput.displayName = "FormInput";
