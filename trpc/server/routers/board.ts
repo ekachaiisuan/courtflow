@@ -27,6 +27,7 @@ export const BoardRouter = createTRPCRouter({
                     userId: ctx.user.id
                 })
             ])
+            return {newBoardId};
         } catch (error) {
             throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",

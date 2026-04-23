@@ -14,10 +14,15 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { authIsRequired } from "@/server/user";
-import { BoardPageContents } from "./_components/board-page-contents";
+import { BoardIdPageContents } from "./_components/board-id-page-contents";
 
-export default async function Page() {
+interface BoardIdPageProps {
+  params: Promise<{ boardId: string }>;
+}
+
+export default async function Page({ params }: BoardIdPageProps) {
   await authIsRequired();
+  const boardId = (await params).boardId;
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -32,19 +37,17 @@ export default async function Page() {
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Trello
-                  </BreadcrumbLink>
+                  <BreadcrumbLink href="#">Dashboard</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Dashboard</BreadcrumbPage>
+                  <BreadcrumbPage>{boardId}</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
           </div>
         </header>
-       <BoardPageContents />
+        <BoardIdPageContents boardId={boardId} />
       </SidebarInset>
     </SidebarProvider>
   );

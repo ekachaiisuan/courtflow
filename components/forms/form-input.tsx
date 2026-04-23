@@ -2,6 +2,7 @@ import { forwardRef } from "react";
 import { FormItem, FormLabel } from "../ui/form";
 import { Input } from "../ui/input";
 import { cn } from "@/lib/utils";
+import { FormErrors } from "./form-errors";
 
 interface FormInputProps {
   className?: string;
@@ -16,6 +17,7 @@ interface FormInputProps {
   placeholder?: string;
   required?: boolean;
   value?: string;
+  errors?: Record<string,string[] | undefined>
 }
 export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
   (
@@ -32,6 +34,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
       placeholder,
       required,
       value,
+      errors,
     },
     ref,
   ) => (
@@ -55,6 +58,7 @@ export const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         required={required}
         value={value}
       />
+      <FormErrors id={id} errors={errors}  />
     </FormItem>
   ),
 );
