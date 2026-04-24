@@ -2,14 +2,20 @@
 
 import { FormPopover } from "@/components/forms/form-popover";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Filter, Grid3X3, List, Plus, Search } from "lucide-react";
 import { useState } from "react";
 import { BoardCreateForm } from "./board-create-form";
+import { BoardList } from "./board-list";
+import { useTRPC } from "@/trpc/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
 
 export const BoardPageContents = () => {
-  const boards = []; // Replace with actual board data
+  const trpc = useTRPC();
+  const { data, isLoading } = useSuspenseQuery(
+    trpc.pages.boardPage.queryOptions(),
+  );
+
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   return (
     <div className="min-h-screen bg-gray-50">
@@ -69,12 +75,14 @@ export const BoardPageContents = () => {
             </div>
           </div>
           {/* Boards Grid/List */}
-          {boards.length === 0 ? (
+          {data?.boards.length === 0 ? (
             <div>No boards found</div>
           ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              grid
+            </div>
           ) : (
-            <div></div>
+            <div>list</div>
           )}
         </div>
       </main>

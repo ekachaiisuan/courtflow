@@ -1,63 +1,71 @@
-# Gemini Project Context: Better Auth Admin
+# CourtFlow (better-auth-admin)
 
-This document provides a comprehensive overview of the `better-auth-admin` project, serving as an instructional context for future Gemini CLI interactions.
+ระบบบริหารจัดการ (Administration) และการจัดตารางเวลา (Scheduling) ที่พัฒนาด้วย Next.js โดยเน้นความปลอดภัย (Security), Type-safety และประสบการณ์การพัฒนาที่ทันสมัย
 
-## Project Overview
+## ภาพรวมโครงการ (Project Overview)
 
-**Purpose:** A robust administrative dashboard and authentication boilerplate built with Next.js, Better Auth, and Drizzle ORM. It features multi-role management, 2FA, Passkeys, and advanced security protections.
+- **Core Framework:** Next.js 16 (App Router) ร่วมกับ React 19
+- **Authentication:** ใช้งาน [Better-Auth](https://www.better-auth.com/)
+  - ฟีเจอร์: Email/Password, GitHub Social Login, 2FA (TOTP/Backup codes), Session Caching
+  - ติดตั้ง Admin plugin สำหรับการจัดการสิทธิ์ (Role-based management)
+- **API & Type Safety:** ใช้งาน [tRPC](https://trpc.io/) เพื่อให้การสื่อสารระหว่าง Client และ Server เป็น Type-safe แบบ end-to-end
+  - ใช้ `Superjson` สำหรับการจัดการข้อมูลประเภทที่ซับซ้อน (เช่น Dates)
+- **Database:** [PostgreSQL](https://neon.tech/) จัดการผ่าน [Drizzle ORM](https://orm.drizzle.team/)
+  - แยก Schema เป็นโมดูลภายใน `db/schema/`
+- **Security:** [Arcjet](https://arcjet.com/) สำหรับทำ Rate limiting และ Bot protection (โดยเฉพาะในส่วนของ Signup และ Login)
+- **UI & Styling:**
+  - [Tailwind CSS v4](https://tailwindcss.com/) สำหรับการกำหนดสไตล์
+  - [shadcn/ui](https://ui.shadcn.com/) สำหรับส่วนประกอบ UI ที่เข้าถึงง่าย (Accessible components)
+  - `Sonner` สำหรับระบบแจ้งเตือน (Toast notifications)
+- **Emails:** [Resend](https://resend.com/) พร้อมเทมเพลตที่สร้างด้วย [React Email](https://react.email/)
 
-**Core Technology Stack:**
-- **Framework:** Next.js 15 (App Router, React 19)
-- **Authentication:** [Better Auth](https://www.better-auth.com/) (Email/Password, Socials, 2FA, Passkeys, Admin Plugin)
-- **Database:** PostgreSQL (Neon) with **Drizzle ORM**
-- **Security:** [Arcjet](https://arcjet.com/) (Shield, Bot Detection, Rate Limiting, Email Validation)
-- **Email:** Resend with React Email
-- **Styling:** Tailwind CSS 4, Radix UI, Shadcn/UI
+## สถาปัตยกรรมและโครงสร้างไดเรกทอรี (Architecture & Directory Structure)
 
-## Architecture & Logic
+- `app/`: หน้าเว็บและ Layouts ของ Next.js
+  - `(auth)/`: เส้นทางที่เกี่ยวข้องกับการยืนยันตัวตน
+  - `admin/`: แผงควบคุมผู้ดูแลระบบและการจัดการผู้ใช้
+  - `api/auth/`: ตัวจัดการ Better-Auth
+  - `api/trpc/`: จุดเชื่อมต่อ tRPC API
+- `components/`: ส่วนประกอบ UI
+  - `ui/`: shadcn/ui primitives
+  - `forms/`: แบบฟอร์มการยืนยันตัวตนและการใช้งานแอปพลิเคชัน
+  - `email/`: เทมเพลต React Email
+- `db/`: การตั้งค่าฐานข้อมูลและ Drizzle schemas
+  - `schema/auth.ts`: ตารางที่เกี่ยวข้องกับการยืนยันตัวตน
+  - `schema/schedule.ts`: ตารางเกี่ยวกับโดเมนของแอปพลิเคชัน (Boards, Actions)
+- `lib/`: ไลบรารีหลักและการตั้งค่าต่างๆ
+  - `auth.ts`: การตั้งค่า Better-Auth ฝั่ง Server และ Plugin
+  - `auth-client.ts`: อินสแตนซ์ Better-Auth ฝั่ง Client
+  - `permissions.ts`: การกำหนด Role-Based Access Control (RBAC)
+- `trpc/`: โครงสร้างพื้นฐานของ tRPC
+  - `server/`: Routers, Procedures (base/protected), และ Context
+  - `client/`: การตั้งค่า React Query และ tRPC client
 
-### Authentication & Permissions
-- **Server Side:** `lib/auth.ts` configures Better Auth with Drizzle adapter, Resend for emails, and the Admin plugin.
-- **Client Side:** `lib/auth-client.ts` initializes the auth client with 2FA and Admin support.
-- **API Route:** `app/api/auth/[...all]/route.ts` is the central hub, protected by Arcjet's `protectSignup` and `slidingWindow` rate limits.
-- **Roles:** Defined in `lib/permissions.ts` using Better Auth's `createAccessControl`.
-  - `user`: Basic access.
-  - `officer`: Can create/read/update projects.
-  - `manager`: Can create/read/update/delete projects.
-  - `admin`: Full access including user management.
+## ข้อกำหนดการพัฒนา (Development Conventions)
 
-### Database Schema (`db/schema/auth.ts`)
-- **user**: Extends default auth schema with `twoFactorEnabled`, `role`, `banned`, and audit timestamps.
-- **session**: Includes `ipAddress`, `userAgent`, and `impersonatedBy`.
-- **account**: Manages social logins and passwords.
-- **two_factor**: Stores TOTP secrets and backup codes.
+- **API Procedures:**
+  - ใช้ `baseProcedure` สำหรับเส้นทางสาธารณะ
+  - ใช้ `protectedProcedure` สำหรับเส้นทางที่ต้องยืนยันตัวตน (จะมี `ctx.user` ให้ใช้งานโดยอัตโนมัติ)
+- **RBAC:** สิทธิ์การใช้งานประกอบด้วย `user`, `officer`, `manager`, และ `admin` โดยกำหนดสิทธิ์ใน `lib/permissions.ts`
+- **Database Changes:** เมื่อแก้ไข `db/schema/` ต้องใช้ `drizzle-kit` เพื่อทำการ Migration ทุกครั้ง
+- **Client State:** ส่วนประกอบที่ต้องการบริบทของ tRPC หรือ React Query ต้องอยู่ภายใต้ `<Provider />` จาก `providers/index.tsx`
 
-### Security Implementation
-- **Arcjet Protection:** Integrated into the `POST` handler of the auth API route. It checks for bots, disposable emails, and applies rate limits based on user ID or IP.
-- **Middleware/Helpers:** `server/user.ts` provides `authIsRequired` and `authIsNotRequired` for server-side redirection.
+## คำสั่งที่สำคัญ (Key Commands)
 
-## Building and Running
+### การพัฒนา (Development)
+- `pnpm dev`: เริ่มเซิร์ฟเวอร์สำหรับการพัฒนา
+- `pnpm lint`: ตรวจสอบคุณภาพโค้ดด้วย ESLint
 
-| Command | Description |
-| :--- | :--- |
-| `pnpm dev` | Starts the Next.js development server. |
-| `pnpm build` | Builds the application for production. |
-| `pnpm start` | Starts the production server. |
-| `pnpm lint` | Runs ESLint. |
-| `npx drizzle-kit push` | Synchronizes database schema with the DB. |
-| `npx drizzle-kit studio` | Opens a web UI for database management. |
+### การสร้างและใช้งานจริง (Build & Production)
+- `pnpm build`: คอมไพล์แอปพลิเคชันสำหรับการใช้งานจริง
+- `pnpm start`: เริ่มเซิร์ฟเวอร์สำหรับการใช้งานจริง
 
-## Development Conventions
+### การจัดการฐานข้อมูล (Drizzle Kit)
+- `pnpm drizzle-kit generate`: สร้างไฟล์ Migration เมื่อมีการเปลี่ยนแปลง Schema
+- `pnpm drizzle-kit push`: อัปเดต Schema ไปยังฐานข้อมูลโดยตรง (เหมาะสำหรับการพัฒนาที่รวดเร็ว)
+- `pnpm drizzle-kit studio`: เปิดหน้าเว็บสำหรับดูข้อมูลในฐานข้อมูล
 
-1.  **Server Actions & Hooks:** Use React 19 server actions for data mutations. Keep core session checks in `server/user.ts`.
-2.  **Type Safety:** Leverage TypeScript strictly across the stack (Drizzle, Zod, and Better Auth).
-3.  **UI Components:** Use Shadcn/UI (Tailwind 4) located in `components/ui`. Add new components via `npx shadcn@latest add <component>`.
-4.  **Security First:** Always ensure new API routes or sensitive actions are protected by appropriate session/role checks.
-5.  **Emails:** New email templates should be added to `components/email` using React Email components.
-
-## Key Directories
-- `app/admin`: Admin dashboard for user and role management.
-- `app/(auth)`: Auth flows (Login, Signup, 2FA, Password Reset).
-- `app/profile`: User settings and session management.
-- `lib/`: Core logic for auth, permissions, and database clients.
-- `server/`: Server-side actions and helper utilities.
+## รายละเอียดการติดตั้งที่สำคัญ (Important Implementation Details)
+- **Rate Limiting:** Arcjet ถูกตั้งค่าไว้เพื่อป้องกันการโจมตีแบบ Brute force ในส่วนของการยืนยันตัวตน
+- **Session Optimization:** Better-Auth ใช้ Cookie cache เพื่อลดภาระการ Query ฐานข้อมูลในการตรวจสอบ Session
+- **Email Verification:** บังคับใช้สำหรับการสมัครสมาชิกใหม่ จัดการผ่าน Resend
