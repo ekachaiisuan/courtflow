@@ -19,11 +19,7 @@
     "@trpc/client": "^11.16.0",
     "@trpc/react-query": "^11.16.0",
     "@trpc/server": "^11.16.0",
-<<<<<<< HEAD
-    "@trpc/tanstack-react-query": "^11.16.0",
-=======
     "@trpc/tanstack-react-query": "11.16.0",
->>>>>>> 368879748fc30fd9ddeaa82f2cc544ab55b2b187
     "@zxcvbn-ts/core": "^3.0.4",
     "@zxcvbn-ts/language-common": "^3.0.4",
     "@zxcvbn-ts/language-en": "^3.0.2",
