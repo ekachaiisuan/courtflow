@@ -12,7 +12,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 
 export const BoardPageContents = () => {
   const trpc = useTRPC();
-  const { data, isLoading } = useSuspenseQuery(
+  const { data } = useSuspenseQuery(
     trpc.pages.boardPage.queryOptions(),
   );
 
@@ -64,8 +64,8 @@ export const BoardPageContents = () => {
               </FormPopover>
 
               {/* Search */}
-              <div className="relative mb-4sm:mb-6">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400"></Search>
+              <div className="relative mb-4 sm:mb-6">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="search"
                   placeholder="Search boards..."
@@ -75,14 +75,10 @@ export const BoardPageContents = () => {
             </div>
           </div>
           {/* Boards Grid/List */}
-          {data?.boards.length === 0 ? (
+          {data.boards.length === 0 ? (
             <div>No boards found</div>
-          ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              grid
-            </div>
           ) : (
-            <div>list</div>
+            <BoardList boards={data.boards} mode={viewMode} />
           )}
         </div>
       </main>
