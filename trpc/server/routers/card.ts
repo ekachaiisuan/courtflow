@@ -1,0 +1,217 @@
+import z from 'zod';
+import { createTRPCRouter, protectedProcedure } from '../init';
+import { and, desc, eq } from 'drizzle-orm';
+import { boardAction, boards, card } from '@/db/schema';
+import { TRPCError } from '@trpc/server';
+import { uuid } from '@/lib/uuid';
+
+export const CardRouter = createTRPCRouter({
+  createCard: protectedProcedure
+    .input(
+      z.object({
+        boardId: z.string(),
+        description: z.string().optional(),
+        listId: z.string(),
+        name: z.string().min(1, { message: 'Name is required' }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { boardId, description, listId, name } = input;
+      const targetBoardWithList = await ctx.db.query.boards
+        .findFirst({
+          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          with: {
+            lists: {
+              with: {
+                cards: {
+                  orderBy: [desc(card.order)],
+                },
+              },
+            },
+          },
+        })
+        .then((boardWithLists) => {
+          if (!boardWithLists) return;
+          const { lists, ...boardWithoutLists } = boardWithLists;
+          return {
+            ...boardWithoutLists,
+            list: lists.find((list) => list.id === listId),
+          };
+        });
+
+      if (!targetBoardWithList)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Board with the given board id is not found',
+        });
+      if (!targetBoardWithList.list)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'List with the given list id is not found',
+        });
+
+      try {
+        const newCardId = uuid();
+        const [updatedCard] = await Promise.all([
+          ctx.db.insert(card).values({
+            name,
+            description,
+            id: newCardId,
+            listId,
+            order: targetBoardWithList.list.cards.length + 1,
+          }),
+
+          ctx.db.insert(boardAction).values({
+            action: 'CREATE',
+            boardComponent: 'list',
+            boardComponentId: newCardId,
+            boardComponentName: name,
+            boardId,
+            id: uuid(),
+            userId: ctx.user.id,
+          }),
+        ]);
+        return { updatedCard };
+      } catch {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update card',
+        });
+      }
+    }),
+  deleteCard: protectedProcedure
+    .input(
+      z.object({
+        boardId: z.string(),
+        cardId: z.string(),
+        cardName: z.string(),
+        listId: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { boardId, cardId, cardName, listId } = input;
+      const targetBoardWithList = await ctx.db.query.boards
+        .findFirst({
+          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          with: {
+            lists: {
+              with: {
+                cards: {
+                  orderBy: [desc(card.order)],
+                },
+              },
+            },
+          },
+        })
+        .then((boardWithLists) => {
+          if (!boardWithLists) return;
+          const { lists, ...boardWithoutLists } = boardWithLists;
+          return {
+            ...boardWithoutLists,
+            list: lists.find((list) => list.id === listId),
+          };
+        });
+
+      if (!targetBoardWithList)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Board with the given board id is not found',
+        });
+      if (!targetBoardWithList.list)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'List with the given list id is not found',
+        });
+
+      try {
+        const [deletedCard] = await Promise.all([
+          ctx.db
+            .delete(card)
+            .where(and(eq(card.id, cardId), eq(card.listId, listId))),
+          ctx.db.insert(boardAction).values({
+            action: 'DELETE',
+            boardComponent: 'card',
+            boardComponentId: cardId,
+            boardComponentName: cardName,
+            boardId,
+            id: uuid(),
+            userId: ctx.user.id,
+          }),
+        ]);
+        return { deletedCard };
+      } catch {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to delete card',
+        });
+      }
+    }),
+  updateCard: protectedProcedure
+    .input(
+      z.object({
+        boardId: z.string(),
+        cardId: z.string(),
+        listId: z.string(),
+        description: z.string().optional(),
+        name: z.string().min(1, { message: 'Name is required' }),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { boardId, cardId, name, listId, description } = input;
+      const targetBoardWithList = await ctx.db.query.boards
+        .findFirst({
+          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          with: {
+            lists: {
+              with: {
+                cards: {
+                  orderBy: [desc(card.order)],
+                },
+              },
+            },
+          },
+        })
+        .then((boardWithLists) => {
+          if (!boardWithLists) return;
+          const { lists, ...boardWithoutLists } = boardWithLists;
+          return {
+            ...boardWithoutLists,
+            list: lists.find((list) => list.id === listId),
+          };
+        });
+
+      if (!targetBoardWithList)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Board with the given board id is not found',
+        });
+      if (!targetBoardWithList.list)
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'List with the given list id is not found',
+        });
+      try {
+        const [updatedCards] = await Promise.all([
+          ctx.db
+            .update(card)
+            .set({ name })
+            .where(and(eq(card.id, cardId), eq(card.listId, listId))).returning(),
+          ctx.db.insert(boardAction).values({
+            action: 'UPDATE',
+            boardComponent: 'list',
+            boardComponentId: cardId,
+            boardComponentName: name,
+            boardId,
+            id: uuid(),
+            userId: ctx.user.id,
+          }),
+        ]);
+        return { updatedCards };
+      } catch {
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to update list',
+        });
+      }
+    }),
+});

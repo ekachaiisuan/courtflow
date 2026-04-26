@@ -63,6 +63,11 @@ export const boardActionRelation = relations(boardAction, ({ one }) => ({
   }),
 }));
 
+export const boardsRelation = relations(boards, ({ many }) => ({
+  lists: many(list),
+}));
+
+
 export type BoardActionLog = typeof boardAction.$inferSelect;
 export type BoardActionLogWithUser = typeof boardAction.$inferSelect & {
   user: User;
