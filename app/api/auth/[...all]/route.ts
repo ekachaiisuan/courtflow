@@ -61,7 +61,7 @@ export async function POST(request: Request) {
 }
 
 async function checkArcjet(request: Request) {
-  const body = (await request.json()) as unknown;
+  const body = await request.json().catch(() => null) as unknown;
   const session = await auth.api.getSession({
     headers: request.headers,
   });
