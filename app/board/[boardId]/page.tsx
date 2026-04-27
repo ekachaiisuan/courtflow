@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/sidebar";
 import { authIsRequired } from "@/server/user";
 import { BoardIdPageContents } from "./_components/board-id-page-contents";
+import { ErrorBoundary } from "react-error-boundary";
+import { ErrorState } from "@/components/error-state";
+import { Suspense } from "react";
 
 interface BoardIdPageProps {
   params: Promise<{ boardId: string }>;
@@ -47,7 +50,11 @@ export default async function Page({ params }: BoardIdPageProps) {
             </Breadcrumb>
           </div>
         </header>
-        <BoardIdPageContents boardId={boardId} />
+        <ErrorBoundary fallback={<ErrorState />}>
+          <Suspense fallback={<div>Loading...</div>}>
+            <BoardIdPageContents boardId={boardId} />
+          </Suspense>
+        </ErrorBoundary>
       </SidebarInset>
     </SidebarProvider>
   );
