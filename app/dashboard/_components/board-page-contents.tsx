@@ -25,7 +25,7 @@ export const BoardPageContents = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-4 sm:space-y-0">
             <div>
               <h2 className="text-lg sm:text-2xl font-bold text-gray-900">
-                Your Boards
+                Your's Boards
               </h2>
               <p className="text-gray-600">Manage your projects and tasks</p>
             </div>

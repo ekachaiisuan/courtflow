@@ -16,8 +16,10 @@ import {
 import { authIsRequired } from "@/server/user";
 import { BoardPageContents } from "./_components/board-page-contents";
 
+
 export default async function Page() {
   await authIsRequired();
+ 
   return (
     <SidebarProvider>
       <AppSidebar />

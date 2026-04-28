@@ -18,6 +18,8 @@ import { BoardIdPageContents } from "./_components/board-id-page-contents";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorState } from "@/components/error-state";
 import { Suspense } from "react";
+import { getQueryClient, trpc } from "@/trpc/server";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 interface BoardIdPageProps {
   params: Promise<{ boardId: string }>;
@@ -26,6 +28,11 @@ interface BoardIdPageProps {
 export default async function Page({ params }: BoardIdPageProps) {
   await authIsRequired();
   const boardId = (await params).boardId;
+  const queryClient = getQueryClient();
+  await queryClient.prefetchQuery(
+    trpc.pages.boardIdPage.queryOptions({ boardId }),
+  );
+
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -50,11 +57,13 @@ export default async function Page({ params }: BoardIdPageProps) {
             </Breadcrumb>
           </div>
         </header>
-        <ErrorBoundary fallback={<ErrorState />}>
-          <Suspense fallback={<div>Loading...</div>}>
-            <BoardIdPageContents boardId={boardId} />
-          </Suspense>
-        </ErrorBoundary>
+        <HydrationBoundary state={dehydrate(queryClient)}>
+          <ErrorBoundary fallback={<ErrorState />}>
+            <Suspense fallback={<div>Loading...</div>}>
+              <BoardIdPageContents boardId={boardId} />
+            </Suspense>
+          </ErrorBoundary>
+        </HydrationBoundary>
       </SidebarInset>
     </SidebarProvider>
   );

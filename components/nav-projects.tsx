@@ -40,7 +40,7 @@ export function NavProjects({
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel>Boards Management</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => {
           const isBoardDetail =

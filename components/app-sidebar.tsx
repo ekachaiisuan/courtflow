@@ -7,8 +7,6 @@ import {
   Command,
   Frame,
   GalleryVerticalEnd,
-  Map,
-  PieChart,
 } from 'lucide-react';
 
 import { NavMain } from '@/components/nav-main';
@@ -63,16 +61,7 @@ const data = {
       url: '/dashboard',
       icon: Frame,
     },
-    {
-      name: 'Sales & Marketing',
-      url: '#',
-      icon: PieChart,
-    },
-    {
-      name: 'Travel',
-      url: '#',
-      icon: Map,
-    },
+
   ],
 };
 
