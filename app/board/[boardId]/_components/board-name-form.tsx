@@ -9,7 +9,9 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
-import { Form } from "@/components/ui/form";
+import { Form, FormField } from "@/components/ui/form";
+import { FormInput } from "@/components/forms/form-input";
+import { Button } from "@/components/ui/button";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name must not be empty" }),
@@ -86,5 +88,43 @@ export const BoardNameForm = ({ board }: BoardNameFormProps) => {
     });
   };
 
- 
+  return isEditing ? (
+    <Form {...form}>
+      <form
+        className="flex gap-x-2 items-center"
+        onSubmit={form.handleSubmit(onSubmit)}
+        ref={formRef}
+      >
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormInput
+              {...field}
+              className="bg-transparent border-none focus-visible:outline-none 
+  focus-visible:ring-transparent font-blod h-7 px-1.75 py-1 text-lg"
+              disabled={updateBoardName.isPending}
+              id="name"
+              onBlur={onBlur}
+              ref={inputRef}
+            />
+          )}
+        ></FormField>
+        <button
+          disabled={updateBoardName.isPending}
+          hidden
+          type="submit"
+        ></button>
+      </form>
+    </Form>
+  ) :(
+    <Button 
+    className="font-bold h-auto px-2 py-1 text-lg w-auto" 
+    onClick={enableEditing}
+    variant="transparent"
+    >
+      {board.name}
+
+    </Button>
+  )
 };
