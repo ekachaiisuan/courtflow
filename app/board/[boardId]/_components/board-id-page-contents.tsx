@@ -1,9 +1,10 @@
 "use client";
 import { useTRPC } from "@/trpc/client";
-import { ListContainer } from "./list-container";
+import { ListContainer } from "./list/list-container";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { BoardNavbar } from "./board-navbar";
 
 interface BoardIdPageContentsProps {
   boardId: string;
@@ -20,6 +21,7 @@ export const BoardIdPageContents = ({ boardId }: BoardIdPageContentsProps) => {
   return board ? (
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto py-6 px-4 sm:py-8 space-y-4">
+        <BoardNavbar board={board} />
         <ListContainer />
       </main>
     </div>

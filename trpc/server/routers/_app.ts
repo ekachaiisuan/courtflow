@@ -1,6 +1,7 @@
 import { createTRPCRouter } from "../init";
 import { BoardRouter } from "./board";
 import { PagesRouter } from "./pages";
+import { ListRouter } from "./list";
 
 // =============================================================================
 // APP ROUTER - Root tRPC router that combines all sub-routers
@@ -28,7 +29,7 @@ export const appRouter = createTRPCRouter({
   // Example: user: userRouter,
   board: BoardRouter,
   pages: PagesRouter,
-  
+  list: ListRouter,
 });
 
 export type AppRouter = typeof appRouter;
