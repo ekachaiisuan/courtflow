@@ -8,8 +8,10 @@ import { BoardNavbar } from "./board-navbar";
 
 interface BoardIdPageContentsProps {
   boardId: string;
+  userImage: string;
+  userName: string;
 }
-export const BoardIdPageContents = ({ boardId }: BoardIdPageContentsProps) => {
+export const BoardIdPageContents = ({ boardId, userImage, userName }: BoardIdPageContentsProps) => {
   const trpc = useTRPC();
 
   const { data } = useSuspenseQuery(
@@ -22,7 +24,13 @@ export const BoardIdPageContents = ({ boardId }: BoardIdPageContentsProps) => {
     <div className="min-h-screen bg-gray-50">
       <main className="container mx-auto py-6 px-4 sm:py-8 space-y-4">
         <BoardNavbar board={board} />
-        <ListContainer />
+        <ListContainer
+          boardId={boardId}
+          listWithCards={board.lists}
+          logs={data.logs}
+          userImage={userImage}
+          userName={userName}
+        />
       </main>
     </div>
   ) : (

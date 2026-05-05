@@ -106,7 +106,8 @@ export const ListForm = () => {
     </li>
   ) : (
     <li className='h-full select-none shrink-0 w-68'>
-      <button className='bg-gray-100 flex font-medium hover:bg-black/10 items-center p-3 rounded-md text-sm transition w-full'>
+      <button className='bg-gray-100 flex font-medium hover:bg-black/10 items-center p-3 rounded-md text-sm transition w-full'
+        onClick={enableEditing}>
         <PlusIcon className='mr-2 size-4' />
         Add a list
       </button>

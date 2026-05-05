@@ -20,7 +20,7 @@ import { ErrorState } from "@/components/error-state";
 import { Suspense } from "react";
 import { getQueryClient, trpc } from "@/trpc/server";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { BoardNavbar } from "./_components/board-navbar";
+
 
 
 interface BoardIdPageProps {
@@ -28,7 +28,7 @@ interface BoardIdPageProps {
 }
 
 export default async function Page({ params }: BoardIdPageProps) {
-  await authIsRequired();
+  const session = await authIsRequired();
   const boardId = (await params).boardId;
   const queryClient = getQueryClient();
   await queryClient.prefetchQuery(
@@ -62,7 +62,7 @@ export default async function Page({ params }: BoardIdPageProps) {
         <HydrationBoundary state={dehydrate(queryClient)}>
           <ErrorBoundary fallback={<ErrorState />}>
             <Suspense fallback={<div>Loading...</div>}>
-              <BoardIdPageContents boardId={boardId} />
+              <BoardIdPageContents boardId={boardId} userImage={session.user.image ?? ""} userName={session.user.name} />
             </Suspense>
           </ErrorBoundary>
         </HydrationBoundary>
