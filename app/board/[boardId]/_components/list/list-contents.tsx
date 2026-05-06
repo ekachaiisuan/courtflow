@@ -10,25 +10,19 @@ interface ListContentsProps {
   userName: string;
 }
 
-export const ListContents = ({  
+export const ListContents = ({
   listWithCards,
   logs,
   userImage,
   userName,
 }: ListContentsProps) => {
-    
-
   return (
     <>
-      <ListHeader 
-        listWithCards={listWithCards}
-        onAddCard={() => {}}
-      />
-      <CardContainer>
-        <div className="shrink-0">
-          <CardForm />
-        </div>
-      </CardContainer>
+      <ListHeader listWithCards={listWithCards} onAddCard={() => {}} />
+      <CardContainer cards={listWithCards.cards} />
+      <div className="shrink-0">
+        {/* <CardForm /> */}
+      </div>
     </>
   );
 };

@@ -2,6 +2,7 @@ import { createTRPCRouter } from "../init";
 import { BoardRouter } from "./board";
 import { PagesRouter } from "./pages";
 import { ListRouter } from "./list";
+import { CardRouter } from "./card";
 
 // =============================================================================
 // APP ROUTER - Root tRPC router that combines all sub-routers
@@ -30,6 +31,7 @@ export const appRouter = createTRPCRouter({
   board: BoardRouter,
   pages: PagesRouter,
   list: ListRouter,
+  card: CardRouter,
 });
 
 export type AppRouter = typeof appRouter;
