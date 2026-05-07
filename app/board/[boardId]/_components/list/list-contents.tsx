@@ -1,7 +1,11 @@
+"use client";
+
 import { BoardActionLog, ListWithCards } from "@/db/schema";
 import { ListHeader } from "./list-header";
 import { CardContainer } from "./card/card-container";
 import { CardForm } from "./card/card-form";
+import { useRef, useState } from "react";
+import { set } from "zod";
 
 interface ListContentsProps {
   listWithCards: ListWithCards;
@@ -10,18 +14,54 @@ interface ListContentsProps {
   userName: string;
 }
 
+interface PendingCard {
+  id: string;
+  name: string;
+}
+
 export const ListContents = ({
   listWithCards,
   logs,
   userImage,
   userName,
 }: ListContentsProps) => {
+  const textAreaRef = useRef<HTMLTextAreaElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [pendingCards,setPendingCards] = useState<PendingCard[]>([]);
+
+  const disableEditing = () => setIsEditing(false);
+  const enableEditing = () => {
+    setIsEditing(true);
+    setTimeout(() => textAreaRef.current?.focus());
+  }
+
+  const addPendingCard = (name: string) => {
+    const pendingId = `pending-${Date.now()}`;
+    setPendingCards([...pendingCards,{id: pendingId,name}]);
+    return pendingId;
+  }
+
+  const removePendingCard = (id: string) => setPendingCards(pendingCards.filter(card => card.id !== id));
+
   return (
     <>
       <ListHeader listWithCards={listWithCards} onAddCard={() => {}} />
-      <CardContainer cards={listWithCards.cards} />
+      <CardContainer
+        listWithCards={listWithCards}
+        logs={logs}
+        pendingCards={pendingCards}
+        userImage={userImage}
+      />
       <div className="shrink-0">
-        {/* <CardForm /> */}
+        <CardForm
+          addPendingCard={addPendingCard}
+          disableEditing={disableEditing}
+          enableEditing={enableEditing}
+          isEditing={isEditing}
+          listId={listWithCards.id}
+          ref={textAreaRef}
+          removePendingCard={removePendingCard}
+          />
       </div>
     </>
   );

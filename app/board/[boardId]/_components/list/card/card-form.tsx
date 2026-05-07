@@ -1,3 +1,6 @@
+"use client";
+
+import { FormSubmit } from "@/components/forms/form-submit";
 import { FormTextArea } from "@/components/forms/form-text-area";
 import { Button } from "@/components/ui/button";
 import { Form, FormField } from "@/components/ui/form";
@@ -123,6 +126,11 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
               />
             )}
           />
+          <FormSubmit
+          disabled={!form.formState.isValid || createCard.isPending}>
+            <PlusIcon className="mr-2 size-4" />
+            Add Card
+          </FormSubmit>
         </form>
       </Form>
     ) : (
