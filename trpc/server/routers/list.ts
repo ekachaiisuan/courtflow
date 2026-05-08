@@ -210,6 +210,52 @@ export const ListRouter = createTRPCRouter({
         });
       }
     }),
+        reorderLists: protectedProcedure.input(z.object({
+          boardId: z.string(),
+          listsToReorder: z.array(z.object({
+            id: z.string(),
+            name: z.string(),
+            order: z.number().int(),
+          })),
+        })).mutation(async ({ ctx, input }) => {
+          const {boardId, listsToReorder} = input;
+          const targetBoard = await ctx.db.query.boards.findFirst({
+            where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          })
+
+          if (!targetBoard) throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Board with the given board id is not found',
+          })
+
+          try{
+            const updatePromises = listsToReorder.map(lists => ctx.db.update(list).set({
+              order: lists.order,
+            }).where(eq(list.id, lists.id)).returning());
+            const results = await Promise.all(updatePromises);
+            const updatedlists = results.flat();
+    
+            await ctx.db.insert(boardAction).values(
+              listsToReorder.map(list => ({
+                action: 'UPDATE' as const,
+                boardComponent: 'list' as const,
+                boardComponentId: list.id,
+                boardComponentName: list.name,
+                boardId: targetBoard.id,
+                id: uuid(),
+                userId: ctx.user.id
+              }))
+            )
+            return {updatedlists};
+    
+          }catch{
+            throw new TRPCError({
+              code: 'INTERNAL_SERVER_ERROR',
+              message: 'There was an issue while reordering the lists',
+            });
+          }
+    
+        }),
   updateList: protectedProcedure
     .input(
       z.object({

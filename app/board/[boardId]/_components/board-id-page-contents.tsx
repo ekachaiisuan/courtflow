@@ -4,7 +4,7 @@ import { ListContainer } from "./list/list-container";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { BoardNavbar } from "./board-navbar";
+import { BoardNavbar, BoardNavbarSkeleton } from "./board-navbar";
 import { BoardSidebar } from "@/components/board-sidebar";
 
 interface BoardIdPageContentsProps {
@@ -57,7 +57,9 @@ export const BoardIdPageContentsSkeleton = () => (
   <div className="flex size-full">
     {/* <BoardSidebarSkeleton /> */}
     <div className="p-2 size-full">
-      <div className="bg-white flex flex-col gap-2 p-2 rounded-md size-full"></div>
+      <div className="bg-white flex flex-col gap-2 p-2 rounded-md size-full">
+        <BoardNavbarSkeleton />
+      </div>
     </div>
   </div>
 );

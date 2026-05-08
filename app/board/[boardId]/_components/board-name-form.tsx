@@ -12,6 +12,7 @@ import z from "zod";
 import { Form, FormField } from "@/components/ui/form";
 import { FormInput } from "@/components/forms/form-input";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   name: z.string().min(1, { message: "Name must not be empty" }),
@@ -128,3 +129,10 @@ export const BoardNameForm = ({ board }: BoardNameFormProps) => {
     </Button>
   )
 };
+
+export const BoardNameFormSkeleton = ()=>(
+  <div className="flex py-1">
+    <Skeleton className="h-7 w-40"/>
+
+  </div>
+)

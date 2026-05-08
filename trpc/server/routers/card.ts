@@ -1,7 +1,7 @@
 import z from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../init';
 import { and, desc, eq } from 'drizzle-orm';
-import { boardAction, boards, card } from '@/db/schema';
+import { boardAction, boards, card, list } from '@/db/schema';
 import { TRPCError } from '@trpc/server';
 import { uuid } from '@/lib/uuid';
 
@@ -145,6 +145,49 @@ export const CardRouter = createTRPCRouter({
           message: 'Failed to delete card',
         });
       }
+    }),
+    reorderCards: protectedProcedure.input(z.object({
+      boardId: z.string(),
+      cardsToReorder: z.array(z.object({
+        id: z.string(),
+        listId: z.string(),
+        name: z.string(),
+        order: z.number().int(),
+      })),
+    })).mutation(async ({ ctx, input }) => {
+      const {boardId, cardsToReorder} = input;
+      const targetBoard = await ctx.db.query.boards.findFirst({
+        where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+      })
+      try{
+        const updatePromises = cardsToReorder.map(cards => ctx.db.update(card).set({
+          listId: cards.listId,
+          order: cards.order,
+          
+        }).where(eq(card.id, cards.id)).returning());
+        const results = await Promise.all(updatePromises);
+        const updateCards = results.flat();
+
+        await ctx.db.insert(boardAction).values(
+          cardsToReorder.map(card => ({
+            action: 'UPDATE' as const,
+            boardComponent: 'card' as const,
+            boardComponentId: card.id,
+            boardComponentName: card.name,
+            boardId,
+            id: uuid(),
+            userId: ctx.user.id
+          }))
+        )
+        return {updateCards};
+
+      }catch{
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'Failed to reorder cards',
+        });
+      }
+
     }),
   updateCard: protectedProcedure
     .input(

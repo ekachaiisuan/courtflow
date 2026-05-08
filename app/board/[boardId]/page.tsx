@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { authIsRequired } from "@/server/user";
-import { BoardIdPageContents } from "./_components/board-id-page-contents";
+import { BoardIdPageContents, BoardIdPageContentsSkeleton } from "./_components/board-id-page-contents";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorState } from "@/components/error-state";
 import { Suspense } from "react";
@@ -61,8 +61,12 @@ export default async function Page({ params }: BoardIdPageProps) {
         </header>
         <HydrationBoundary state={dehydrate(queryClient)}>
           <ErrorBoundary fallback={<ErrorState />}>
-            <Suspense fallback={<div>Loading...</div>}>
-              <BoardIdPageContents boardId={boardId} userImage={session.user.image ?? ""} userName={session.user.name} />
+            <Suspense fallback={<BoardIdPageContentsSkeleton/>}>
+              <BoardIdPageContents 
+              boardId={boardId} 
+              userImage={session.user.image ?? ""} 
+              userName={session.user.name} 
+              />
             </Suspense>
           </ErrorBoundary>
         </HydrationBoundary>
