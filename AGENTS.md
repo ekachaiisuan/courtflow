@@ -109,12 +109,19 @@
 - ห้าม query database ใน Client Component
 - Query ต้องเป็น type-safe และหลีกเลี่ยง any
 
-# Server Actions
+# Server Actions สำหรับ authen ของระบบ
+- app/admin/*
 - ใช้ Server Actions สำหรับ form handling และ mutation logic
 - Validation ควรทำก่อน execute business logic ด้วย Zod
 **ทุก Server Action ที่แก้ไขข้อมูลสำคัญต้อง**:
  - ตรวจสอบ auth
  - ตรวจสอบ role/permission
+
+# Server Actions สำหรับ app Trello
+- app/board/*
+- app/dashboard/*
+- React Hook Form + Zod + client mutation/authClient/tRPC
+
 
 # API Route Handlers
 - ใช้ app/api/*/route.ts ตาม App Router convention
