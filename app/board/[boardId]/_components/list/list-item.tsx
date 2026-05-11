@@ -1,8 +1,10 @@
 import { BoardActionLog, ListWithCards } from "@/db/schema";
 import { ListContents } from "./list-contents"
 import { DraggableList } from "./draggable-list";
+import { DragSate } from "@/lib/drag-types";
 
 interface ListItemProps {
+    dragState: DragSate;
     index: number;
     listWithCards: ListWithCards;
     logs: BoardActionLog[];

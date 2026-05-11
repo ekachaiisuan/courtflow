@@ -3,15 +3,16 @@ import {
   Card,
   list,
   ListWithCards,
-} from '@/db/schema/schedule';
-import { ListItem } from './list-item';
-import { ListForm } from './list-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTRPC } from '@/trpc/client';
-import { useState } from 'react';
-import { DragSate } from '@/lib/drag-types';
-import { toast } from 'sonner';
-import { set } from 'zod';
+} from "@/db/schema/schedule";
+import { ListItem } from "./list-item";
+import { ListForm } from "./list-form";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/trpc/client";
+import { useEffect, useState } from "react";
+import { DragData, DragSate } from "@/lib/drag-types";
+import { toast } from "sonner";
+import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
+import { monitorForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
 interface ListContainerProps {
   boardId: string;
@@ -33,7 +34,7 @@ export const ListContainer = ({
   const reorderCards = useMutation(
     trpc.card.reorderCards.mutationOptions({
       onError: (error) =>
-        toast('Failed to reorder cards', {
+        toast("Failed to reorder cards", {
           description: error.message,
         }),
       onSuccess: () =>
@@ -45,7 +46,7 @@ export const ListContainer = ({
   const reorderLists = useMutation(
     trpc.list.reorderLists.mutationOptions({
       onError: (error) =>
-        toast('Failed to reorder lists', {
+        toast("Failed to reorder lists", {
           description: error.message,
         }),
       onSuccess: () =>
@@ -61,7 +62,8 @@ export const ListContainer = ({
     placeholderListId: null,
   });
 
-  const [orderdData, setOrderdData] = useState<ListWithCards[]>(listWithCards);
+  const [orderedData, setOrderedData] =
+    useState<ListWithCards[]>(listWithCards);
 
   const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
     const result = Array.from(list);
@@ -80,8 +82,8 @@ export const ListContainer = ({
     if (sourceCardIndex < 0 || targetCardIndex < 0) return;
     if (sourceListId === targetListId) return;
 
-    const snapshot = [...orderdData];
-    const newOrderData = [...orderdData];
+    const snapshot = [...orderedData];
+    const newOrderData = [...orderedData];
     const sourceList = newOrderData.find((list) => list.id === sourceListId);
     const destinationList = newOrderData.find(
       (list) => list.id === targetListId,
@@ -107,13 +109,49 @@ export const ListContainer = ({
         order: index,
       }));
       sourceList.cards = newCards;
-      setOrderdData([...newOrderData]);
+      setOrderedData([...newOrderData]);
       reorderCards.mutate(
         {
           boardId,
           cardsToReorder: shapeCardToReorderCardInput(newCards),
         },
-        {},
+        {
+          onError: () => setOrderedData(snapshot),
+        },
+      );
+    } else {
+      const sourceCardsCopy = [...sourceList.cards];
+      const destinationCardsCopy = [...destinationList.cards];
+      const [movedCard] = sourceCardsCopy.splice(sourceCardIndex, 1);
+      const moveCardCopy = { ...movedCard, listId: targetListId };
+      destinationCardsCopy.splice(targetCardIndex, 0, moveCardCopy);
+      const newSourceCards = sourceCardsCopy.map((card, index) => ({
+        ...card,
+        order: index,
+      }));
+
+      const newDestinationCards = destinationCardsCopy.map((card, index) => ({
+        ...card,
+        order: index,
+      }));
+      sourceList.cards = newSourceCards;
+      destinationList.cards = newDestinationCards;
+
+      setOrderedData([...newOrderData]);
+
+      const allCardsToReorder = [
+        ...shapeCardToReorderCardInput(newSourceCards),
+        ...shapeCardToReorderCardInput(newDestinationCards),
+      ];
+
+      reorderCards.mutate(
+        {
+          boardId,
+          cardsToReorder: allCardsToReorder,
+        },
+        {
+          onError: () => setOrderedData(snapshot),
+        },
       );
     }
   };
@@ -126,12 +164,174 @@ export const ListContainer = ({
       order: card.order,
     }));
 
+  const handleListReorder = (sourceIndex: number, targetIndex: number) => {
+    if (sourceIndex === targetIndex) return;
+    const snapshot = [...orderedData];
+    const listsToReorder = reorder(orderedData, sourceIndex, targetIndex).map(
+      (list, index) => ({
+        ...list,
+        order: index,
+      }),
+    );
+    setOrderedData(listsToReorder);
+    reorderLists.mutate(
+      {
+        boardId,
+        listsToReorder,
+      },
+      {
+        onError: () => setOrderedData(snapshot),
+      },
+    );
+  };
+
+  useEffect(() => {
+    return monitorForElements({
+      onDragStart({ source }) {
+        setDragState({
+          draggedItem: {
+            id:
+              source.data.type === "card"
+                ? (source.data.cardId as string)
+                : (source.data.listId as string),
+            index: source.data.index as number,
+            listId: source.data.listId as string,
+            type: source.data.type as "card" | "list",
+          },
+          isDragging: true,
+          placeholderIndex: null,
+          placeholderListId: null,
+        });
+      },
+      onDrag({ location, source }) {
+        const target = location.current.dropTargets[0];
+        if (!target) {
+          setDragState((prev) => ({
+            ...prev,
+            placeholderIndex: null,
+            placeholderListId: null,
+          }));
+          return;
+        }
+        const closestEdge = extractClosestEdge(target.data);
+
+        const { placeholderIndex, placeholderListId } =
+          calculatePlaceholderPosition(
+            closestEdge,
+            orderedData,
+            source.data as unknown as DragData,
+            source.data as unknown as DragData,
+          );
+        setDragState((prev) => ({
+          ...prev,
+          placeholderIndex,
+          placeholderListId,
+        }));
+      },
+      onDrop({ location, source }) {
+        setDragState({
+          draggedItem: null,
+          isDragging: false,
+          placeholderIndex: null,
+          placeholderListId: null,
+        });
+        const target = location.current.dropTargets[0];
+        if (!target) return;
+        const sourceData = source.data;
+        const targetData = target.data;
+        const closestEdge = extractClosestEdge(targetData);
+        if (sourceData.type === "list") {
+          const targetList = location.current.dropTargets.find(
+            (t) => t.data.type === "list",
+          );
+          if (!targetList || sourceData.index === undefined) return;
+          const sourceIndex = sourceData.index as number;
+          const targetIndex = targetList.data.index as number;
+          if (sourceIndex === targetIndex) return;
+          handleListReorder(sourceIndex, targetIndex);
+          return;
+        }
+        if (sourceData.type === "card") {
+          const sourceListId = sourceData.listId as string;
+          const sourceCardIndex = sourceData.index as number;
+          if (sourceCardIndex === undefined) return;
+          if (targetData.type === "card") {
+            const targetListId = targetData.listId as string;
+            let targetCardIndex = targetData.index as number;
+            if (closestEdge === "bottom") targetCardIndex++;
+            if (
+              sourceListId === targetListId &&
+              sourceCardIndex < targetCardIndex
+            )
+              targetCardIndex--;
+            handleCardReorder(
+              sourceCardIndex,
+              sourceListId,
+              targetCardIndex,
+              targetListId,
+            );
+            return;
+          }
+          const targetList = location.current.dropTargets.find(
+            (t) => t.data.type === "list",
+          );
+          if (targetList) {
+            const targetListId = targetList.data.listId as string;
+            const list = orderedData.find((list) => list.id === targetListId);
+            const targetCardIndex = list?.cards.length ?? 0;
+            handleCardReorder(
+              sourceCardIndex,
+              sourceListId,
+              targetCardIndex,
+              targetListId,
+            );
+          }
+        }
+      },
+    });
+  }, [handleCardReorder, handleListReorder, orderedData]);
+
+  const calculatePlaceholderPosition = (
+    closestEdge: string | null,
+    orderedData: ListWithCards[],
+    sourceData: DragData,
+    targetData: DragData,
+  ): {
+    placeholderIndex: number | null;
+    placeholderListId: string | null;
+  } => {
+    if (sourceData.type !== "card")
+      return {
+        placeholderIndex: null,
+        placeholderListId: null,
+      };
+    if (targetData.type === "card") {
+      let placeholderIndex = targetData.index;
+      if (closestEdge === "buttom") placeholderIndex++;
+      return {
+        placeholderIndex,
+        placeholderListId: targetData.listId,
+      };
+    }
+    if (targetData.type === "list") {
+      const list = orderedData.find((list) => list.id === targetData.listId);
+      const listCardCount = list?.cards.length ?? 0;
+      if (listCardCount > 0)
+        return {
+          placeholderIndex: listCardCount,
+          placeholderListId: targetData.listId,
+        };
+    }
+    return { placeholderIndex: null, placeholderListId: null };
+  };
+
   return (
     <div className="h-full overflow-x-auto">
       <ol className="flex gap-x-3 h-full pb-2">
         {/*TODO: Add all the lists here*/}
         {listWithCards.map((list, index) => (
           <ListItem
+            dragState={dragState}
             key={list.id}
             index={index}
             listWithCards={list}

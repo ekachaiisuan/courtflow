@@ -1,6 +1,6 @@
 ---
 name: server-actions-form-workflow
-description: Implement form handling and mutation flows in this repository while respecting its split architecture: use Next.js Server Actions for auth and system-level forms, and keep the Trello app flows on React Hook Form plus Zod plus client mutation or authClient or tRPC where the project rules require it. Use when deciding whether a form should be a Server Action, wiring validation and auth checks, or following the repository's form conventions for auth, dashboard, and board features.
+description: "Implement form handling and mutation flows in this repository while respecting its split architecture: use Next.js Server Actions for auth and system-level forms, and keep the Trello app flows on React Hook Form plus Zod plus client mutation or authClient or tRPC where the project rules require it. Use when deciding whether a form should be a Server Action, wiring validation and auth checks, or following the repository's form conventions for auth, dashboard, and board features."
 ---
 
 # Server Actions Form Workflow

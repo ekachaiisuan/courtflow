@@ -1,5 +1,11 @@
+"use client";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import {
+  draggable,
+  dropTargetForElements,
+} from "@atlaskit/pragmatic-drag-and-drop/dist/types/adapter/element-adapter";
 
 interface DraggableListProps {
   children: React.ReactNode;
@@ -14,6 +20,31 @@ export const DraggableList = ({
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLLIElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  useEffect(() => {
+    const dragHandle = dragHandleRef.current;
+    const element = listRef.current;
+    if (!dragHandle || !element) return;
+    return combine(
+      draggable({
+        element: dragHandle,
+        getInitialData: () => ({
+          index,
+          listId,
+          type: "list",
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+      dropTargetForElements({
+        element,
+        getData: () => ({
+          index,
+          listId,
+          type: "list",
+        }),
+      }),
+    );
+  });
   return (
     <li
       className={cn(
