@@ -75,7 +75,7 @@ export const CardContainer = ({
       >
         {/** TODO: add empty list drop zone here */}
         <EmptyDropZone
-          isDropTarget={dragState.draggedItem?.listId === listWithCards.id}
+          isDropTarget={dragState.placeholderListId === listWithCards.id}
           isVisible={
             dragState.isDragging &&
             dragState.draggedItem?.type === "card" &&
@@ -105,6 +105,7 @@ export const CardContainer = ({
                 logs={logs}
                 name={card.name}
                 shiftDown={shouldShiftCard(index)}
+                userName={userName}
               />
             </CardSlot>
           ))}

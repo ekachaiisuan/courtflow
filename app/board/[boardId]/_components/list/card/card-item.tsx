@@ -13,6 +13,7 @@ interface CardItemProps {
   logs: BoardActionLog[];
   name: string;
   shiftDown: boolean;
+  userName: string;
 }
 export const CardItem = ({
   cardWithList,
@@ -22,6 +23,7 @@ export const CardItem = ({
   logs,
   name,
   shiftDown = false,
+  userName,
 }: CardItemProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -39,6 +41,7 @@ export const CardItem = ({
           cardId: cardWithList.id,
           index,
           listId: cardWithList.listId,
+          userName,
           type: "card",
         }),
         onDragStart: () => setIsDragging(true),

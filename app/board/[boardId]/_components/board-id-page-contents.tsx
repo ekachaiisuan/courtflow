@@ -5,7 +5,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { BoardNavbar, BoardNavbarSkeleton } from "./board-navbar";
-import { BoardSidebar } from "@/components/board-sidebar";
 
 interface BoardIdPageContentsProps {
   boardId: string;

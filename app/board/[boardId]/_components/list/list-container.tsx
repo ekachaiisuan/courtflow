@@ -1,14 +1,13 @@
 import {
   BoardActionLog,
   Card,
-  list,
   ListWithCards,
 } from "@/db/schema/schedule";
 import { ListItem } from "./list-item";
 import { ListForm } from "./list-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DragData, DragSate } from "@/lib/drag-types";
 import { toast } from "sonner";
 import { extractClosestEdge } from "@atlaskit/pragmatic-drag-and-drop-hitbox/closest-edge";
@@ -65,6 +64,10 @@ export const ListContainer = ({
   const [orderedData, setOrderedData] =
     useState<ListWithCards[]>(listWithCards);
 
+  useEffect(() => {
+    setOrderedData(listWithCards);
+  }, [listWithCards]);
+
   const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
     const result = Array.from(list);
     const [removed] = result.splice(startIndex, 1);
@@ -73,117 +76,156 @@ export const ListContainer = ({
     return result;
   };
 
-  const handleCardReorder = (
-    sourceCardIndex: number,
-    sourceListId: string,
-    targetCardIndex: number,
-    targetListId: string,
-  ) => {
-    if (sourceCardIndex < 0 || targetCardIndex < 0) return;
-    if (sourceListId === targetListId) return;
-
-    const snapshot = [...orderedData];
-    const newOrderData = [...orderedData];
-    const sourceList = newOrderData.find((list) => list.id === sourceListId);
-    const destinationList = newOrderData.find(
-      (list) => list.id === targetListId,
-    );
-
-    if (!sourceList || !destinationList) return;
-    if (!sourceList.cards) sourceList.cards = [];
-    if (!destinationList.cards) destinationList.cards = [];
-
-    if (sourceCardIndex >= sourceList.cards.length) return;
-    if (targetCardIndex >= destinationList.cards.length) return;
-
-    if (sourceListId === targetListId) {
-      if (sourceCardIndex === targetCardIndex) return;
-      const cardsCopy = [...sourceList.cards];
-      const reorderedCards = reorder(
-        cardsCopy,
-        sourceCardIndex,
-        targetCardIndex,
-      );
-      const newCards = reorderedCards.map((card, index) => ({
-        ...card,
-        order: index,
-      }));
-      sourceList.cards = newCards;
-      setOrderedData([...newOrderData]);
-      reorderCards.mutate(
-        {
-          boardId,
-          cardsToReorder: shapeCardToReorderCardInput(newCards),
-        },
-        {
-          onError: () => setOrderedData(snapshot),
-        },
-      );
-    } else {
-      const sourceCardsCopy = [...sourceList.cards];
-      const destinationCardsCopy = [...destinationList.cards];
-      const [movedCard] = sourceCardsCopy.splice(sourceCardIndex, 1);
-      const moveCardCopy = { ...movedCard, listId: targetListId };
-      destinationCardsCopy.splice(targetCardIndex, 0, moveCardCopy);
-      const newSourceCards = sourceCardsCopy.map((card, index) => ({
-        ...card,
-        order: index,
-      }));
-
-      const newDestinationCards = destinationCardsCopy.map((card, index) => ({
-        ...card,
-        order: index,
-      }));
-      sourceList.cards = newSourceCards;
-      destinationList.cards = newDestinationCards;
-
-      setOrderedData([...newOrderData]);
-
-      const allCardsToReorder = [
-        ...shapeCardToReorderCardInput(newSourceCards),
-        ...shapeCardToReorderCardInput(newDestinationCards),
-      ];
-
-      reorderCards.mutate(
-        {
-          boardId,
-          cardsToReorder: allCardsToReorder,
-        },
-        {
-          onError: () => setOrderedData(snapshot),
-        },
-      );
-    }
-  };
-
-  const shapeCardToReorderCardInput = (cards: Card[]) =>
-    cards.map((card) => ({
+  function shapeCardToReorderCardInput(cards: Card[]) {
+    return cards.map((card) => ({
       id: card.id,
       listId: card.listId,
       name: card.name,
       order: card.order,
     }));
+  }
 
-  const handleListReorder = (sourceIndex: number, targetIndex: number) => {
-    if (sourceIndex === targetIndex) return;
-    const snapshot = [...orderedData];
-    const listsToReorder = reorder(orderedData, sourceIndex, targetIndex).map(
-      (list, index) => ({
-        ...list,
-        order: index,
-      }),
-    );
-    setOrderedData(listsToReorder);
-    reorderLists.mutate(
-      {
-        boardId,
-        listsToReorder,
-      },
-      {
-        onError: () => setOrderedData(snapshot),
-      },
-    );
-  };
+  const handleCardReorder = useCallback(
+    (
+      sourceCardIndex: number,
+      sourceListId: string,
+      targetCardIndex: number,
+      targetListId: string,
+    ) => {
+      if (sourceCardIndex < 0 || targetCardIndex < 0) return;
+
+      const snapshot = [...orderedData];
+      const newOrderData = [...orderedData];
+      const sourceList = newOrderData.find((list) => list.id === sourceListId);
+      const destinationList = newOrderData.find(
+        (list) => list.id === targetListId,
+      );
+
+      if (!sourceList || !destinationList) return;
+      if (!sourceList.cards) sourceList.cards = [];
+      if (!destinationList.cards) destinationList.cards = [];
+
+      if (sourceCardIndex >= sourceList.cards.length) return;
+      if (targetCardIndex > destinationList.cards.length) return;
+
+      if (sourceListId === targetListId) {
+        if (sourceCardIndex === targetCardIndex) return;
+        const cardsCopy = [...sourceList.cards];
+        const reorderedCards = reorder(
+          cardsCopy,
+          sourceCardIndex,
+          targetCardIndex,
+        );
+        const newCards = reorderedCards.map((card, index) => ({
+          ...card,
+          order: index,
+        }));
+        sourceList.cards = newCards;
+        setOrderedData([...newOrderData]);
+        reorderCards.mutate(
+          {
+            boardId,
+            cardsToReorder: shapeCardToReorderCardInput(newCards),
+          },
+          {
+            onError: () => setOrderedData(snapshot),
+          },
+        );
+      } else {
+        const sourceCardsCopy = [...sourceList.cards];
+        const destinationCardsCopy = [...destinationList.cards];
+        const [movedCard] = sourceCardsCopy.splice(sourceCardIndex, 1);
+        const moveCardCopy = { ...movedCard, listId: targetListId };
+        destinationCardsCopy.splice(targetCardIndex, 0, moveCardCopy);
+        const newSourceCards = sourceCardsCopy.map((card, index) => ({
+          ...card,
+          order: index,
+        }));
+
+        const newDestinationCards = destinationCardsCopy.map((card, index) => ({
+          ...card,
+          order: index,
+        }));
+        sourceList.cards = newSourceCards;
+        destinationList.cards = newDestinationCards;
+
+        setOrderedData([...newOrderData]);
+
+        const allCardsToReorder = [
+          ...shapeCardToReorderCardInput(newSourceCards),
+          ...shapeCardToReorderCardInput(newDestinationCards),
+        ];
+
+        reorderCards.mutate(
+          {
+            boardId,
+            cardsToReorder: allCardsToReorder,
+          },
+          {
+            onError: () => setOrderedData(snapshot),
+          },
+        );
+      }
+    },
+    [boardId, orderedData, reorderCards],
+  );
+
+  const handleListReorder = useCallback(
+    (sourceIndex: number, targetIndex: number) => {
+      if (sourceIndex === targetIndex) return;
+      const snapshot = [...orderedData];
+      const listsToReorder = reorder(orderedData, sourceIndex, targetIndex).map(
+        (list, index) => ({
+          ...list,
+          order: index,
+        }),
+      );
+      setOrderedData(listsToReorder);
+      reorderLists.mutate(
+        {
+          boardId,
+          listsToReorder,
+        },
+        {
+          onError: () => setOrderedData(snapshot),
+        },
+      );
+    },
+    [boardId, orderedData, reorderLists],
+  );
+
+  function calculatePlaceholderPosition(
+    closestEdge: string | null,
+    orderedData: ListWithCards[],
+    sourceData: DragData,
+    targetData: DragData,
+  ): {
+    placeholderIndex: number | null;
+    placeholderListId: string | null;
+  } {
+    if (sourceData.type !== "card")
+      return {
+        placeholderIndex: null,
+        placeholderListId: null,
+      };
+    if (targetData.type === "card") {
+      let placeholderIndex = targetData.index;
+      if (closestEdge === "bottom") placeholderIndex++;
+      return {
+        placeholderIndex,
+        placeholderListId: targetData.listId,
+      };
+    }
+    if (targetData.type === "list") {
+      const list = orderedData.find((list) => list.id === targetData.listId);
+      const listCardCount = list?.cards.length ?? 0;
+      return {
+        placeholderIndex: listCardCount,
+        placeholderListId: targetData.listId,
+      };
+    }
+    return { placeholderIndex: null, placeholderListId: null };
+  }
 
   useEffect(() => {
     return monitorForElements({
@@ -220,7 +262,7 @@ export const ListContainer = ({
             closestEdge,
             orderedData,
             source.data as unknown as DragData,
-            source.data as unknown as DragData,
+            target.data as unknown as DragData,
           );
         setDragState((prev) => ({
           ...prev,
@@ -291,45 +333,11 @@ export const ListContainer = ({
     });
   }, [handleCardReorder, handleListReorder, orderedData]);
 
-  const calculatePlaceholderPosition = (
-    closestEdge: string | null,
-    orderedData: ListWithCards[],
-    sourceData: DragData,
-    targetData: DragData,
-  ): {
-    placeholderIndex: number | null;
-    placeholderListId: string | null;
-  } => {
-    if (sourceData.type !== "card")
-      return {
-        placeholderIndex: null,
-        placeholderListId: null,
-      };
-    if (targetData.type === "card") {
-      let placeholderIndex = targetData.index;
-      if (closestEdge === "buttom") placeholderIndex++;
-      return {
-        placeholderIndex,
-        placeholderListId: targetData.listId,
-      };
-    }
-    if (targetData.type === "list") {
-      const list = orderedData.find((list) => list.id === targetData.listId);
-      const listCardCount = list?.cards.length ?? 0;
-      if (listCardCount > 0)
-        return {
-          placeholderIndex: listCardCount,
-          placeholderListId: targetData.listId,
-        };
-    }
-    return { placeholderIndex: null, placeholderListId: null };
-  };
-
   return (
     <div className="h-full overflow-x-auto">
       <ol className="flex gap-x-3 h-full pb-2">
         {/*TODO: Add all the lists here*/}
-        {listWithCards.map((list, index) => (
+        {orderedData.map((list, index) => (
           <ListItem
             dragState={dragState}
             key={list.id}
