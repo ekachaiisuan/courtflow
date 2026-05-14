@@ -1,29 +1,51 @@
 import { BoardActionLog, CardWithList } from "@/db/schema";
 import { CARD_GAP, LONG_WORD_THRESHOLD } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { useRef, useState } from "react";
+import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
+import { draggable } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+import { useEffect, useRef, useState } from "react";
 
 interface CardItemProps {
   cardWithList: CardWithList;
   hidden?: boolean;
   image: string;
+  index: number;
   logs: BoardActionLog[];
   name: string;
   shiftDown: boolean;
 }
 export const CardItem = ({
   cardWithList,
-  hidden,
+  hidden = false,
   image,
+  index,
   logs,
   name,
   shiftDown = false,
 }: CardItemProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState();
+  const [isDragging, setIsDragging] = useState(false);
   const hasLongWord = cardWithList.name
     .split(" ")
     .some((word) => word.length > LONG_WORD_THRESHOLD);
+
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element) return;
+    return combine(
+      draggable({
+        element,
+        getInitialData: () => ({
+          cardId: cardWithList.id,
+          index,
+          listId: cardWithList.listId,
+          type: "card",
+        }),
+        onDragStart: () => setIsDragging(true),
+        onDrop: () => setIsDragging(false),
+      }),
+    );
+  },[cardWithList.id, cardWithList.listId, index]);
 
   return (
     <div className="relative">

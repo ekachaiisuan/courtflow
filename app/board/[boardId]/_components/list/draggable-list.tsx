@@ -5,7 +5,8 @@ import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import {
   draggable,
   dropTargetForElements,
-} from "@atlaskit/pragmatic-drag-and-drop/dist/types/adapter/element-adapter";
+} from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
+
 
 interface DraggableListProps {
   children: React.ReactNode;
@@ -44,7 +45,7 @@ export const DraggableList = ({
         }),
       }),
     );
-  });
+  },[index, listId]);
   return (
     <li
       className={cn(

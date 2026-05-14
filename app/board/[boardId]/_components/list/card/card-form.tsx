@@ -98,10 +98,12 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
               description: error.message,
             });
           },
-          onSuccess: () =>
+          onSuccess: () => {
+            removePendingCard(pendingId);
             queryClient.invalidateQueries({
               queryKey: trpc.pages.boardIdPage.queryKey({ boardId }),
-            }),
+            });
+          },
         },
       );
     };
@@ -127,7 +129,8 @@ export const CardForm = forwardRef<HTMLTextAreaElement, CardFormProps>(
             )}
           />
           <FormSubmit
-          disabled={!form.formState.isValid || createCard.isPending}>
+            disabled={!form.formState.isValid || createCard.isPending}
+          >
             <PlusIcon className="mr-2 size-4" />
             Add Card
           </FormSubmit>

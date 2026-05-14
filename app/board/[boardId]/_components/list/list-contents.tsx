@@ -5,9 +5,10 @@ import { ListHeader } from "./list-header";
 import { CardContainer } from "./card/card-container";
 import { CardForm } from "./card/card-form";
 import { useRef, useState } from "react";
-import { set } from "zod";
+import { DragSate } from "@/lib/drag-types";
 
 interface ListContentsProps {
+  dragState: DragSate;
   listWithCards: ListWithCards;
   logs: BoardActionLog[];
   userImage: string;
@@ -20,6 +21,7 @@ interface PendingCard {
 }
 
 export const ListContents = ({
+  dragState,
   listWithCards,
   logs,
   userImage,
@@ -45,12 +47,14 @@ export const ListContents = ({
 
   return (
     <>
-      <ListHeader listWithCards={listWithCards} onAddCard={() => {}} />
+      <ListHeader listWithCards={listWithCards} onAddCard={enableEditing} />
       <CardContainer
+        dragState={dragState}
         listWithCards={listWithCards}
         logs={logs}
         pendingCards={pendingCards}
         userImage={userImage}
+        userName={userName}
       />
       <div className="shrink-0">
         <CardForm

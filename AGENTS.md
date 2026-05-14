@@ -77,8 +77,22 @@
  - ใช้ trpc ในส่วนของ Business logic
 
  ## Project Trello Clone
- - อยากให้เป็นกระดานที่ทำงานร่วมกัน
- - เป็น platform ที่ทำให้เกิดการประสานงานในองค์กร
+ - ระบบบริหารและติดตามงานในรูปแบบ Workflow Board เพื่อสนับสนุนการบริหารจัดการงานภายในหน่วยงาน โดยระบบรองรับการกำหนดสิทธิ์ผู้ใช้งานหลายระดับ (Role-Based Access Control) การแยกข้อมูลตามหน่วยงาน การตรวจสอบประวัติการดำเนินงาน และการรับส่งข้อมูลแบบตรวจสอบความถูกต้องอัตโนมัติ เพื่อลดความซ้ำซ้อนในการปฏิบัติงาน เพิ่มความถูกต้องของข้อมูล และเพิ่มประสิทธิภาพในการติดตามสถานะงาน
+
+ ## features Trello Clone ที่อยากให้มี
+- Multi-Workspace Architecture
+- Audit Log
+- Notification
+- Dashboard Analytics
+- File Attachment
+- Approval Workflow
+- Activity Timeline
+- Search System
+- Export Report
+- AI Summary
+- API Security
+- Rate Limiting
+- Backup / Recovery
 
 # Authentication (Better Auth)
 - ใช้ Better Auth เป็นแหล่งข้อมูล session เพียงแหล่งเดียว

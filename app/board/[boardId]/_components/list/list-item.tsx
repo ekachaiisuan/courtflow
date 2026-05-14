@@ -13,12 +13,13 @@ interface ListItemProps {
 }
 
 
-export const ListItem = ({ index, listWithCards, logs, userImage, userName }: ListItemProps) => {
+export const ListItem = ({dragState, index, listWithCards, logs, userImage, userName }: ListItemProps) => {
     //TODO:add drag and drop functionality here
     
     return (
         <DraggableList index={index} listId={listWithCards.id}>
         <ListContents
+        dragState={dragState}
             listWithCards={listWithCards}
             logs={logs}
             userImage={userImage}
