@@ -18,6 +18,7 @@
 - TRPC
 - Tanstack Query
 - Pragmatic DnD
+- zustand
 
 
 # Build, Test และ Development Commands
