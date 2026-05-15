@@ -1,3 +1,5 @@
+'use client';
+
 import { BoardActionLog, CardWithList } from "@/db/schema";
 import { CARD_GAP, LONG_WORD_THRESHOLD } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -55,14 +57,14 @@ export const CardItem = ({
       <div
         className={cn(
           "active:cursor-grabbing bg-white border-2 border-transparent cursor-grab duration-150 hover:border-black overflow-hidden rounded-md text-sm transition-all",
-          hasLongWord ? "break-all" : isDragging && "opacity-50",
+          hasLongWord ? "break-all" : "wrap-break hyphens-auto", isDragging && "opacity-50",
         )}
         ref={cardRef}
         role="button"
         style={{
           opacity: hidden ? 0 : undefined,
           pointerEvents: hidden ? "none" : undefined,
-          transform: shiftDown ? `translateY(${CARD_GAP})` : undefined,
+          transform: shiftDown ? `translateY(${CARD_GAP}px)` : undefined,
           transition: "transform 150ms ease",
           visibility: hidden ? "hidden" : undefined,
         }}

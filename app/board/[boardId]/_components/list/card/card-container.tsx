@@ -75,7 +75,7 @@ export const CardContainer = ({
       >
         {/** TODO: add empty list drop zone here */}
         <EmptyDropZone
-          isDropTarget={dragState.placeholderListId === listWithCards.id}
+          isDropTarget={dragState.draggedItem?.listId === listWithCards.id}
           isVisible={
             dragState.isDragging &&
             dragState.draggedItem?.type === "card" &&
