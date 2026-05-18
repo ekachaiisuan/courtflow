@@ -1,12 +1,12 @@
 import { FormInput } from "@/components/forms/form-input";
-import { FormField } from "@/components/ui/form";
+import { Form, FormField } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CardWithList } from "@/db/schema";
 import { useTRPC } from "@/trpc/client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef } from "react";
-import { Form, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -76,7 +76,7 @@ export const Header = ({ cardWithList }: HeaderProps) => {
           </form>
         </Form>
         <p className="text-muted-foreground text-sm">
-              in list <span className="underline"></span>
+              in list <span className="underline">{cardWithList.list.name}</span>
         </p>
       </div>
     </div>

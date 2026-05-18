@@ -29,7 +29,7 @@ interface DescriptionProps {
 export const Description = ({ cardWithList }: DescriptionProps) => {
   const form = useForm<FormSchema>({
     defaultValues: {
-      description: "",
+      description: cardWithList.description ?? "",
     },
     resolver: zodResolver(formSchema),
   });
@@ -67,8 +67,7 @@ export const Description = ({ cardWithList }: DescriptionProps) => {
         disableEditing();
         setDescription(
           data.updatedCards.find((card) => card.id === cardWithList.id)
-            ?.description ?? "",
-        );
+            ?.description ?? "");
         queryClient.invalidateQueries({
           queryKey: trpc.pages.boardIdPage.queryKey({
             boardId: cardWithList.list.boardId,
@@ -86,7 +85,7 @@ export const Description = ({ cardWithList }: DescriptionProps) => {
       boardId: cardWithList.list.boardId,
       cardId: cardWithList.id,
       description: formData.description,
-      listId: cardWithList.listId,
+      listId: cardWithList.list.id,
       name: cardWithList.name,
     });
   };

@@ -318,7 +318,7 @@ export const CardRouter = createTRPCRouter({
         const [updatedCards] = await Promise.all([
           ctx.db
             .update(card)
-            .set({ name })
+            .set({ name, description })
             .where(and(eq(card.id, cardId), eq(card.listId, listId)))
             .returning(),
           ctx.db.insert(boardAction).values({
