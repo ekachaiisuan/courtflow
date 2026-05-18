@@ -15,6 +15,7 @@ import { CardWithList } from "@/db/schema";
 
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const formSchema = z.object({
   description: z.string().optional(),
@@ -25,7 +26,7 @@ interface DescriptionProps {
   cardWithList: CardWithList;
 }
 
-export const CardForm = ({ cardWithList }: DescriptionProps) => {
+export const Description = ({ cardWithList }: DescriptionProps) => {
   const form = useForm<FormSchema>({
     defaultValues: {
       description: "",
@@ -41,6 +42,10 @@ export const CardForm = ({ cardWithList }: DescriptionProps) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const disableEditing = () => setIsEditing(false);
+  const enableEditing = () => {
+    setIsEditing(true);
+    setTimeout(() => textAreaRef.current?.focus());
+  };
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Escape") disableEditing();
@@ -112,20 +117,37 @@ export const CardForm = ({ cardWithList }: DescriptionProps) => {
                 )}
               />
               <div className="flex gap-x-2 items-center">
-                <FormSubmit disabled={updateCard.isPending}>
-                    Save
-                </FormSubmit>
-                <Button 
-                onClick={disableEditing}
-                size="sm"
-                type="button"
-                variant="ghost"
+                <FormSubmit disabled={updateCard.isPending}>Save</FormSubmit>
+                <Button
+                  onClick={disableEditing}
+                  size="sm"
+                  type="button"
+                  variant="ghost"
                 ></Button>
               </div>
             </form>
           </Form>
-        ) : null}
+        ) : (
+          <div
+            className="bg-neutral-200 font-medium min-h-19.5 px-3.5 py-3 rounded-md text-sm"
+            onClick={enableEditing}
+            role="button"
+          >
+            {description || "Add a description..."}
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+export const DescriptionSkeleton = () => (
+  <div className="flex gap-x-3 items-start w-full">
+    <Skeleton className="bg-neutral-200 size-6">
+      <div className="w-full">
+        <Skeleton className="bg-neutral-200 h-6 mb-2 w-24"></Skeleton>
+        <Skeleton className="bg-neutral-200 h-19.5 w-full"></Skeleton>
+      </div>
+    </Skeleton>
+  </div>
+);

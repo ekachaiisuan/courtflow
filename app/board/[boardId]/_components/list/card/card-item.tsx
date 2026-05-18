@@ -1,6 +1,7 @@
 'use client';
 
 import { BoardActionLog, CardWithList } from "@/db/schema";
+import { useCardModal } from "@/hooks/use-card-modal";
 import { CARD_GAP, LONG_WORD_THRESHOLD } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
@@ -27,6 +28,7 @@ export const CardItem = ({
   shiftDown = false,
   userName,
 }: CardItemProps) => {
+  const {onOpen} = useCardModal();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const hasLongWord = cardWithList.name
@@ -59,6 +61,7 @@ export const CardItem = ({
           "active:cursor-grabbing bg-white border-2 border-transparent cursor-grab duration-150 hover:border-black overflow-hidden rounded-md text-sm transition-all",
           hasLongWord ? "break-all" : "wrap-break hyphens-auto", isDragging && "opacity-50",
         )}
+        onClick={() => onOpen(cardWithList, image, logs.filter((log) => log.boardComponentId === cardWithList.id), name)}
         ref={cardRef}
         role="button"
         style={{
