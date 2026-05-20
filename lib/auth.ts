@@ -8,16 +8,15 @@ import ResetPasswordEmail from '@/components/email/reset-password';
 import { createAuthMiddleware } from 'better-auth/api';
 import WelcomeEmail from '@/components/email/welcome-email';
 import { twoFactor, admin as adminPlugin } from 'better-auth/plugins';
-import { ac, admin, user, officer, manager } from "@/lib/permissions"
-import * as authSchema from "@/db/schema/auth"
-
+import { ac, admin, user, officer, manager } from '@/lib/permissions';
+import * as authSchema from '@/db/schema/auth';
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: 'pg',
-    schema: authSchema
+    schema: authSchema,
   }),
   emailAndPassword: {
     enabled: true,
@@ -31,8 +30,8 @@ export const auth = betterAuth({
           userEmail: user.email,
           url,
         }),
-      })
-    }
+      });
+    },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }, request) => {
@@ -47,7 +46,7 @@ export const auth = betterAuth({
       });
     },
     sendOnSignUp: true,
-    expiresIn: 300 //5 minutes
+    expiresIn: 300, //5 minutes
   },
   socialProviders: {
     github: {
@@ -62,12 +61,12 @@ export const auth = betterAuth({
     },
   },
   hooks: {
-    after: createAuthMiddleware(async ctx => {
-      if (ctx.path.startsWith("/signup")) {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith('/signup')) {
         const user = ctx.context.newSession?.user ?? {
           name: ctx.body.name,
           email: ctx.body.email,
-        }
+        };
         if (user !== null) {
           await resend.emails.send({
             from: `admin <${process.env.EMAIL_FROM!}>`,
@@ -79,16 +78,20 @@ export const auth = betterAuth({
           });
         }
       }
-    })
+    }),
   },
-  plugins: [nextCookies(), twoFactor(), adminPlugin({
-    defaultRole: 'user',
-    ac,
-    roles: {
-      user,
-      admin,
-      officer,
-      manager,
-    },
-  })],
+  plugins: [
+    nextCookies(),
+    twoFactor(),
+    adminPlugin({
+      defaultRole: 'user',
+      ac,
+      roles: {
+        user,
+        admin,
+        officer,
+        manager,
+      },
+    }),
+  ],
 });
