@@ -1,15 +1,22 @@
 # Plan: เปลี่ยน Board Owner-Only เป็น Workspace Collaboration
 
 ## Summary
+
 เปลี่ยน boundary หลักของระบบจาก `board.userId = owner คนเดียว` ไปเป็น `workspace -> workspace members -> boards` เพื่อให้หลายคนใน workspace เดียวกันเข้าถึงและแก้ไขบอร์ดเดียวกันได้อย่างถูกต้องทั้งฝั่ง read และ write
 
 สำหรับ v1 นี้ใช้แนวทาง:
+
 - ทุกบอร์ดต้องสังกัด workspace
-- role มี 2 ระดับ: `admin` และ `member`
+- role มี 3 ระดับ: `admin`,`super` และ `member`
+  admin = จัดการ user ในระบบ และ จัดการสมาชิกใน workspace ได้
+  super = จัดการสมาชิกใน workspace ได้
+  member = จัดการ board ใน workspace ได้
 - รวม flow จัดการสมาชิกและเชิญสมาชิกไว้ใน scope
 
 ## Key Changes
+
 ### 1. Data model และสิทธิ์ใหม่
+
 - เพิ่มตาราง `workspaces`
   ฟิลด์หลัก: `id`, `name`, `createdBy`, timestamps
 - เพิ่มตาราง `workspace_members`
@@ -23,6 +30,7 @@
 - เพิ่ม relation ใน Drizzle ให้ query แบบ `workspace -> boards`, `workspace -> members`, `board -> workspace` ได้ตรง ๆ
 
 ### 2. RBAC และ server-side authorization
+
 - เพิ่ม permission helper ฝั่ง server สำหรับ workspace เช่น:
   - `getWorkspaceMember(workspaceId, userId)`
   - `requireWorkspaceAccess(workspaceId)`
@@ -36,6 +44,7 @@
 - ห้ามพึ่ง UI condition เป็น security layer; ทุก read/write ต้องเช็ค membership หรือ role ใน router/page/server action
 
 ### 3. tRPC read/write flow ที่ต้องเปลี่ยน
+
 - `pages.boardPage`
   เปลี่ยนจากดึง “boards ของ user” เป็น “boards ของทุก workspace ที่ user เป็นสมาชิก”
   payload ควรรวม workspace summary มาด้วยเพื่อใช้แยกกลุ่มใน dashboard
@@ -60,6 +69,7 @@
   - `workspace.listMembers`
 
 ### 4. UI / route behavior
+
 - Dashboard เปลี่ยนจาก “Your's Boards” เป็นมุมมองตาม workspace
   แนะนำให้มี workspace switcher หรือ grouped board sections
 - ฟอร์มสร้าง board ต้องเลือก `workspace`
@@ -75,6 +85,7 @@
 - ลิงก์ invite ควรผูกกับ token และมีหน้า accept ที่บังคับ login ก่อน join workspace
 
 ## Public Interfaces / Types
+
 - เพิ่ม enum/type:
   - `WorkspaceRole = "admin" | "member"`
   - `WorkspaceInviteStatus = "pending" | "accepted" | "revoked" | "expired"`
@@ -88,6 +99,7 @@
   - workspace member/invite procedures ตามที่ระบุด้านบน
 
 ## Test Plan
+
 - ผู้ใช้ที่ไม่ได้เป็นสมาชิก workspace เข้าหน้า `/board/[boardId]` ไม่ได้
 - `member` เปิดบอร์ดได้และ:
   - สร้าง list ได้
@@ -110,6 +122,7 @@
   - ลอง member เข้าบอร์ด workspace อื่นที่ไม่ใช่ของตน ต้องถูกปฏิเสธ
 
 ## Migration / Rollout Assumptions
+
 - เลือกแนวทาง backfill:
   สำหรับ user เดิมแต่ละคน สร้าง personal workspace อัตโนมัติ 1 อัน แล้วโยกทุก board เดิมเข้า workspace นั้น
 - ไม่รองรับ personal board หลังจบ migration; board ใหม่ทุกใบต้องมี `workspaceId`
