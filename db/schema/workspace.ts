@@ -23,12 +23,12 @@ export const workspaces = pgTable('workspaces', {
 });
 
 export const workspaceRoleEnum = pgEnum('workspace_role', [
+  'owner',
   'admin',
-  'super',
   'member',
 ]);
 
-export type WorkspaceRole = 'admin' | 'super' | 'member';
+export type WorkspaceRole = 'owner' | 'admin' | 'member';
 
 export const workspaceMembers = pgTable(
   'workspace_members',
@@ -52,6 +52,8 @@ export const workspaceMembers = pgTable(
     index('workspace_members_workspace_id_idx').on(table.workspaceId),
   ],
 );
+
+export type WorkspaceMember = typeof workspaceMembers.$inferSelect;
 
 export const workspaceRelations = relations(workspaces, ({ one, many }) => ({
   createdByUser: one(user, {

@@ -1,13 +1,16 @@
 Plan
 
-Step ถัดไป: แยก System Role กับ Workspace Role ให้ชัด
-Summary
+## Step ถัดไป: แยก System Role กับ Workspace Role ให้ชัด
+
+# Summary
+
 คง lib/permissions.ts ไว้เป็น Better Auth system RBAC เหมือนเดิม แล้วเพิ่ม workspace role ที่ db/schema/workspace.ts ผ่าน enum/table workspace_members เพื่อไม่ให้สิทธิ์ระดับระบบกับสิทธิ์ภายใน workspace ปนกัน
 
-Key Changes
+## Key Changes
+
 ไม่แก้ ROLES = ["user", "officer", "manager", "admin"] ใน lib/permissions.ts
 เพิ่ม workspaceRoleEnum ใน db/schema/workspace.ts:
-admin, super, member
+owner,admin, member
 เพิ่ม type WorkspaceRole
 เพิ่ม table workspace_members
 เพิ่ม relation ระหว่าง user, workspace, และ workspace_members
@@ -25,4 +28,4 @@ Test Plan
 Assumptions
 lib/permissions.ts = system-level permission
 workspace_members.role = workspace-level permission
-ชุด role workspace v1 ใช้ admin/super/member ตามเอกสารล่าสุด
+ชุด role workspace v1 ใช้ owner/admin/member ตามเอกสารล่าสุด

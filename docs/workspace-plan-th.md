@@ -7,10 +7,10 @@
 สำหรับ v1 นี้ใช้แนวทาง:
 
 - ทุกบอร์ดต้องสังกัด workspace
-- role มี 3 ระดับ: `admin`,`super` และ `member`
-  admin = จัดการ user ในระบบ และ จัดการสมาชิกใน workspace ได้
-  super = จัดการสมาชิกใน workspace ได้
-  member = จัดการ board ใน workspace ได้
+- role มี 3 ระดับ: `owner`,`admin`, และ `member`
+  owner = เจ้าของ workspace, จัดการ workspace settings, admin, member, invite, ลบ/โอน workspace
+  admin = จัดการ board, member, invite ภายใน workspace
+  member = ใช้งาน board/list/card
 - รวม flow จัดการสมาชิกและเชิญสมาชิกไว้ใน scope
 
 ## Key Changes
@@ -87,7 +87,7 @@
 ## Public Interfaces / Types
 
 - เพิ่ม enum/type:
-  - `WorkspaceRole = "admin" | "member"`
+  - `WorkspaceRole = "admin" | "owner"| "member"`
   - `WorkspaceInviteStatus = "pending" | "accepted" | "revoked" | "expired"`
 - เปลี่ยน type ของ `Board`
   จากมี `userId` เป็น `workspaceId`
