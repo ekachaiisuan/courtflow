@@ -8,6 +8,13 @@
       "when": 1772353586810,
       "tag": "0000_regular_lake",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779701705038,
+      "tag": "0001_boards_workspace_owner",
+      "breakpoints": true
     }
   ]
 }

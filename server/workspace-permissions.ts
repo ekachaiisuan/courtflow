@@ -12,6 +12,21 @@ import {
 } from '@/db/schema/workspace';
 import { authSession } from '@/server/user';
 
+async function requireBoard(boardId: string): Promise<Board> {
+  const board = await db.query.boards.findFirst({
+    where: eq(boards.id, boardId),
+  });
+
+  if (!board) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'User does not have access to this board',
+    });
+  }
+
+  return board;
+}
+
 export async function getWorkspaceMember(
   workspaceId: string,
   userId: string,
@@ -58,12 +73,10 @@ export async function requireBoardAccess(boardId: string): Promise<Board> {
     });
   }
 
-  // TODO: After boards.workspaceId lands, check access through workspace membership.
-  const board = await db.query.boards.findFirst({
-    where: and(eq(boards.id, boardId), eq(boards.userId, session.user.id)),
-  });
+  const board = await requireBoard(boardId);
+  const member = await getWorkspaceMember(board.workspaceId, session.user.id);
 
-  if (!board) {
+  if (!member) {
     throw new TRPCError({
       code: 'FORBIDDEN',
       message: 'User does not have access to this board',
@@ -88,4 +101,12 @@ export async function requireWorkspaceRole(
   }
 
   return member;
+}
+
+export async function requireBoardAdminAccess(boardId: string): Promise<Board> {
+  const board = await requireBoard(boardId);
+
+  await requireWorkspaceRole(board.workspaceId, ['owner', 'admin']);
+
+  return board;
 }

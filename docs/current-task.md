@@ -16,22 +16,52 @@
   - `requireWorkspaceRole(workspaceId, "admin")`
   - `requireWorkspaceRole(workspaceId, ["owner", "admin"])`
   - `requireBoardAccess(boardId)`
-    - ตอนนี้เป็น transitional owner-only guard ผ่าน `boards.userId`
-    - หลังเพิ่ม `boards.workspaceId` แล้วให้เปลี่ยนภายใน helper นี้ไปเช็ค workspace membership
+    - เปลี่ยนแล้วให้ load board แล้วเช็ค workspace membership ผ่าน `board.workspaceId`
+  - `requireBoardAdminAccess(boardId)`
+    - เพิ่มแล้วเพื่อใช้ map สิทธิ์ board management ผ่าน workspace role `["owner", "admin"]`
+
+- จัดการ schema/migration ของ board ownership แล้ว
+  - แก้ `db/schema/schedule.ts`
+    - ลบ `boards.userId`
+    - เพิ่ม `boards.workspaceId`
+    - เพิ่ม foreign key ไปที่ `workspaces.id`
+    - เพิ่ม index `boards_workspace_id_idx`
+    - เพิ่ม relation `board -> workspace`
+  - คง `board_actions.userId` ไว้เป็น actor log ไม่ใช่ ownership
+  - เพิ่ม manual migration `migrations/0001_boards_workspace_owner.sql`
+  - update `migrations/meta/_journal.json`
+  - migrate ขึ้น NeonDB แล้ว
 
 ## Verification:
 
 - รันผ่านแล้ว:
   - `pnpm exec eslint server/workspace-permissions.ts db/schema/workspace.ts`
   - `pnpm exec eslint server/workspace-permissions.ts db/schema/workspace.ts db/schema/schedule.ts`
+  - `pnpm exec eslint db/schema/schedule.ts db/schema/workspace.ts`
+  - `pnpm exec drizzle-kit migrate`
+  - `pnpm exec eslint server/workspace-permissions.ts db/schema/schedule.ts db/schema/workspace.ts`
+
+- ตรวจ NeonDB หลัง migrate แล้ว:
+  - `boards` ไม่มี `user_id`
+  - `boards.workspace_id` เป็น `NOT NULL`
+  - มี foreign key `boards_workspace_id_workspaces_id_fk`
+  - มี index `boards_workspace_id_idx`
 
 - หมายเหตุ:
-  - `pnpm lint` ทั้งโปรเจกต์ยัง fail จาก lint errors เดิมในไฟล์อื่นที่ไม่เกี่ยวกับ workspace RBAC helpers
-  - lint เฉพาะ `db/schema/schedule.ts` ยังมี warnings เดิมเรื่อง unused imports
+  - `pnpm exec tsc --noEmit` ยัง fail เพราะ router หลายจุดยังอ้าง `boards.userId`
+  - error ฝั่ง `server/workspace-permissions.ts` ที่เคยอ้าง `boards.userId` หายแล้ว
+  - จุดที่ต้องแก้ถัดไปอยู่ใน `trpc/server/routers/board.ts`, `trpc/server/routers/list.ts`, `trpc/server/routers/card.ts`, และ `trpc/server/routers/pages.ts`
 
 ## Next:
 
-- ทำ helper ถัดไป:
-  - `requireBoardAdminAccess(boardId)` หรือ policy helper ที่ map ผ่าน workspace role
+- Focus ถัดไป: ทำ RBAC ฝั่ง server ให้ครบก่อนตาม `workspace-plan-th.md`
+  - เปลี่ยน guard ใน `board/list/card/pages` routers จาก `eq(boards.userId, ctx.user.id)` ไปใช้ helper กลาง
+  - ใช้ `requireBoardAdminAccess(boardId)` กับ action ระดับจัดการบอร์ด
+  - ใช้ `requireBoardAccess(boardId)` กับ read/list/card actions ที่ `member` ทำได้
+  - เปลี่ยน `board.createBoard` ให้รับ `workspaceId` และบังคับ role `admin` หรือ `owner`
+  - เปลี่ยน `pages.boardPage` และ `pages.boardIdPage` ให้ดึงข้อมูลตาม workspace membership แทน owner-only query
 
-- ก่อนเปลี่ยน board/list/card router ทั้งชุด ควรทำ schema/migration ให้ `boards` ผูกกับ `workspaceId` ให้เรียบร้อยก่อน
+- ยังไม่ focus รอบนี้:
+  - UI workspace switcher
+  - invite flow
+  - workspace router ชุดเต็ม
