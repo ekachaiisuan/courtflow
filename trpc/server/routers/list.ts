@@ -4,6 +4,7 @@ import { boardAction, boards, card, list } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { uuid } from "@/lib/uuid";
+import { requireBoardAccess } from "@/server/workspace-permissions";
 
 export const ListRouter = createTRPCRouter({
   copyList: protectedProcedure
@@ -15,6 +16,8 @@ export const ListRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, id } = input;
+      await requireBoardAccess(boardId);
+
       const listToCopy = await ctx.db.query.list.findFirst({
         where: eq(list.id, id),
       });
@@ -24,7 +27,7 @@ export const ListRouter = createTRPCRouter({
           message: "List with the given id is not found",
         });
       const targetBoard = await ctx.db.query.boards.findFirst({
-        where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+        where: eq(boards.id, boardId),
       });
       if (!targetBoard)
         throw new TRPCError({
@@ -33,7 +36,7 @@ export const ListRouter = createTRPCRouter({
         });
       const [cardsToCopy, existingListsInBoard] = await Promise.all([
         ctx.db.query.card.findMany({
-          where: eq(list.id, listToCopy.id),
+          where: eq(card.listId, listToCopy.id),
         }),
         ctx.db.query.list.findMany({
           orderBy: (lists, { desc }) => [desc(lists.order)],
@@ -77,7 +80,7 @@ export const ListRouter = createTRPCRouter({
             return {
               ...card,
               id: copyCardId,
-              listId: listToCopy.id
+              listId: newListId,
             };
           });
           await Promise.all([
@@ -110,8 +113,10 @@ export const ListRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, name } = input;
+      await requireBoardAccess(boardId);
+
       const targetBoard = await ctx.db.query.boards.findFirst({
-        where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+        where: eq(boards.id, boardId),
       });
       if (!targetBoard) {
         throw new TRPCError({
@@ -167,9 +172,10 @@ export const ListRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, id } = input;
+      await requireBoardAccess(boardId);
 
       const targetBoardWithList = await ctx.db.query.boards.findFirst({
-        where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+        where: eq(boards.id, boardId),
         with: {
           lists: true,
         },
@@ -219,8 +225,10 @@ export const ListRouter = createTRPCRouter({
           })),
         })).mutation(async ({ ctx, input }) => {
           const {boardId, listsToReorder} = input;
+          await requireBoardAccess(boardId);
+
           const targetBoard = await ctx.db.query.boards.findFirst({
-            where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+            where: eq(boards.id, boardId),
           })
 
           if (!targetBoard) throw new TRPCError({
@@ -266,9 +274,11 @@ export const ListRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, id, name } = input;
+      await requireBoardAccess(boardId);
+
       const targetBoardWithList = await ctx.db.query.boards
         .findFirst({
-          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          where: eq(boards.id, boardId),
           with: {
             lists: true,
           },

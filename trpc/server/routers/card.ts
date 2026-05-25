@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { boardAction, boards, card } from "@/db/schema";
 import { TRPCError } from "@trpc/server";
 import { uuid } from "@/lib/uuid";
+import { requireBoardAccess } from "@/server/workspace-permissions";
 
 export const CardRouter = createTRPCRouter({
   copyCard: protectedProcedure
@@ -29,11 +30,7 @@ export const CardRouter = createTRPCRouter({
           code: "NOT_FOUND",
           message: "Requested card matching the provided id not found",
         });
-      if (cardToCopy.list.board.userId !== ctx.user.id)
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "User does not have access to the board",
-        });
+      await requireBoardAccess(cardToCopy.list.board.id);
       const existingCardsInList = await ctx.db.query.card.findMany({
         orderBy: (cards, { desc }) => [desc(cards.order)],
         where: eq(card.listId, cardToCopy.listId),
@@ -89,9 +86,11 @@ export const CardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, description, listId, name } = input;
+      await requireBoardAccess(boardId);
+
       const targetBoardWithList = await ctx.db.query.boards
         .findFirst({
-          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          where: eq(boards.id, boardId),
           with: {
             lists: {
               with: {
@@ -162,9 +161,11 @@ export const CardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, cardId, cardName, listId } = input;
+      await requireBoardAccess(boardId);
+
       const targetBoardWithList = await ctx.db.query.boards
         .findFirst({
-          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          where: eq(boards.id, boardId),
           with: {
             lists: {
               with: {
@@ -234,9 +235,16 @@ export const CardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, cardsToReorder } = input;
+      await requireBoardAccess(boardId);
+
       const targetBoard = await ctx.db.query.boards.findFirst({
-        where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+        where: eq(boards.id, boardId),
       });
+      if (!targetBoard)
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Board with the given board id is not found",
+        });
       try {
         const updatePromises = cardsToReorder.map((cards) =>
           ctx.db
@@ -282,9 +290,11 @@ export const CardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, cardId, name, listId, description } = input;
+      await requireBoardAccess(boardId);
+
       const targetBoardWithList = await ctx.db.query.boards
         .findFirst({
-          where: and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)),
+          where: eq(boards.id, boardId),
           with: {
             lists: {
               with: {

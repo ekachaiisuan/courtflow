@@ -6,35 +6,36 @@ Next.js 16 App Router · tRPC · Drizzle ORM · Neon (PostgreSQL) · Better Auth
 
 ---
 
-## Folder Structure
+## Where Things Live
+
+| ต้องการอะไร            | ไปที่                               |
+| ---------------------- | ----------------------------------- |
+| Data model / relations | `db/schema/`                        |
+| Business logic         | `trpc/server/routers/`              |
+| Permission boundary    | `server/workspace-permissions.ts`   |
+| Auth config            | `lib/auth.ts`                       |
+| System-level RBAC      | `lib/permissions.ts`                |
+| Route UI               | `app/.../page.tsx` + `_components/` |
+| Shared UI              | `components/`                       |
+| Task / plan docs       | `docs/`                             |
+
+---
+
+## Key Files
 
 ```
-app/
-├── (auth)/
-├── admin/
-├── board/[boardId]/_components/
-├── dashboard/_components/
-├── api/auth/[...all]/
-└── profile
-
-## Files
+db/schema/
+  auth.ts         # Better Auth tables
+  schedule.ts     # boards, list, card, board_actions
+  workspace.ts    # workspaces, workspace_members
 
 trpc/server/routers/
-├── board.ts · list.ts · card.ts · pages.ts
-└── workspace.ts  (planned)
-
-db/schema/
-├── auth.ts
-├── index.ts
-├── schedule.ts   # boards, lists, cards, board_actions
-└── workspace.ts  # workspaces, workspace_members
+  board.ts · list.ts · card.ts   # mutations
+  pages.ts                        # page-shaped read models
 
 server/
-└── workspace-permissions.ts
-
-lib/
-├── auth.ts        # requireAuth(), requireAdmin()
-└── permissions.ts
+  workspace-permissions.ts        # RBAC helpers (เริ่มที่นี่เสมอ)
+  user.ts                         # session helpers
 ```
 
 ---
@@ -49,8 +50,7 @@ workspace_members
   id, workspaceId → workspaces.id (cascade), userId → user.id (cascade)
   role: "owner" | "admin" | "member"
   joinedAt
-  UNIQUE(workspaceId, userId)
-  INDEX(userId), INDEX(workspaceId)
+  UNIQUE(workspaceId, userId) · INDEX(userId) · INDEX(workspaceId)
 
 boards
   id, name, workspaceId → workspaces.id (cascade), timestamps
@@ -62,11 +62,11 @@ list
 card
   id, name, description, order, listId → list.id (cascade), timestamps
 
-board_actions
-  id, action: CREATE|UPDATE|DELETE, boardComponent: board|card|list
-  boardComponentId, boardComponentName, boardId, userId → user.id (cascade)
-  createdAt
-  (actor log only — ไม่ใช่ ownership)
+board_actions                          # actor log — ไม่ใช่ ownership
+  id, action: CREATE|UPDATE|DELETE
+  boardComponent: board|card|list
+  boardComponentId, boardComponentName, boardId
+  userId → user.id (cascade), createdAt
 ```
 
 ---
@@ -96,25 +96,17 @@ requireBoardAdminAccess(boardId, userId)  // owner | admin เท่านั้
 
 ---
 
-## Data Flow
+## Rules
 
-```
-Server Component
-  → requireAuth()
-  → tRPC caller / Drizzle query
-  → render
-
-Client Component
-  → React Hook Form + Zod
-  → tRPC mutation (TanStack Query)
-  → optimistic update (Zustand สำหรับ DnD)
-```
+- Server Component เท่านั้นที่ query DB ได้
+- ทุก tRPC mutation ต้องเช็ค permission helper ก่อนเสมอ
+- UI ใช้ role เพื่อซ่อน/แสดง element เท่านั้น — ไม่ใช่ security layer
+- Session ดึงฝั่ง server เสมอก่อนเข้าข้อมูลสำคัญ
 
 ---
 
-## Auth Rules
+## Session Goal
 
-- Session ดึงฝั่ง server เสมอก่อนเข้าข้อมูลสำคัญ
-- ห้าม query DB จาก Client Component
-- UI ใช้ role เพื่อซ่อน/แสดง UI เท่านั้น — ไม่ใช่ security layer
-- ทุก mutation ใน tRPC router ต้องเช็ค permission ผ่าน helper ก่อนเสมอ
+- ทำให้ระบบบริหารจัดการ board จากเดิม board owner only เป็น board workspaces Collaboration โดยเน้นความปลอดภัยของการรับส่งข้อมูล
+
+---

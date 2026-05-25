@@ -12,6 +12,10 @@ import {
 } from '@/db/schema/workspace';
 import { authSession } from '@/server/user';
 
+// Internal guard for board-scoped permission checks.
+// This helper intentionally returns a generic FORBIDDEN error when the board
+// cannot be resolved, so callers do not leak whether a board exists or the
+// user simply lacks access to it.
 async function requireBoard(boardId: string): Promise<Board> {
   const board = await db.query.boards.findFirst({
     where: eq(boards.id, boardId),

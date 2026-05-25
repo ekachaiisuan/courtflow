@@ -1,8 +1,12 @@
 import { boardAction, boards } from '@/db/schema';
 import { uuid } from '@/lib/uuid';
+import {
+  requireBoardAdminAccess,
+  requireWorkspaceRole,
+} from '@/server/workspace-permissions';
 import { createTRPCRouter, protectedProcedure } from '@/trpc/server/init';
 import { TRPCError } from '@trpc/server';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import z from 'zod';
 
 export const BoardRouter = createTRPCRouter({
@@ -10,17 +14,21 @@ export const BoardRouter = createTRPCRouter({
     .input(
       z.object({
         name: z.string().min(1, { message: 'Name is required' }),
+        workspaceId: z.string().min(1, { message: 'Workspace is required' }),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { name } = input;
+      const { name, workspaceId } = input;
       const newBoardId = uuid();
+
+      await requireWorkspaceRole(workspaceId, ['owner', 'admin']);
+
       try {
         await Promise.all([
           ctx.db.insert(boards).values({
             id: newBoardId,
             name,
-            userId: ctx.user.id,
+            workspaceId,
           }),
           ctx.db.insert(boardAction).values({
             action: 'CREATE',
@@ -33,7 +41,7 @@ export const BoardRouter = createTRPCRouter({
           }),
         ]);
         return { newBoardId };
-      } catch (error) {
+      } catch {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
           message: 'Failed to create board',
@@ -49,10 +57,11 @@ export const BoardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId } = input;
+
+      await requireBoardAdminAccess(boardId);
+
       try {
-        await ctx.db
-          .delete(boards)
-          .where(and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id)));
+        await ctx.db.delete(boards).where(eq(boards.id, boardId));
       } catch {
         throw new TRPCError({
           code: 'INTERNAL_SERVER_ERROR',
@@ -69,12 +78,15 @@ export const BoardRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const { boardId, name } = input;
+
+      await requireBoardAdminAccess(boardId);
+
       try {
         await Promise.all([
           ctx.db
             .update(boards)
             .set({ name })
-            .where(and(eq(boards.id, boardId), eq(boards.userId, ctx.user.id))),
+            .where(eq(boards.id, boardId)),
           ctx.db.insert(boardAction).values({
             action: 'UPDATE',
             boardComponent: 'board',

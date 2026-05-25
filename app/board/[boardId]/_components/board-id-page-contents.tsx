@@ -22,7 +22,7 @@ export const BoardIdPageContents = ({
     trpc.pages.boardIdPage.queryOptions({ boardId }),
   );
 
-  const board = data.boards.find((board) => board.id === boardId);
+  const { board } = data;
 
   return board ? (
     <div className="min-h-screen bg-gray-50">
