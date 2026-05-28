@@ -1,4 +1,10 @@
-# Plan: เปลี่ยน Board Owner-Only เป็น Workspace Collaboration
+# Plan: เปลี่ยน Board Owner-Only เป็น Workspace Collaboration V1
+
+Status: Deprecated
+Replaced by: workspace-plan-th-v2.md
+Reason:
+
+- Moved to intranet architecture
 
 ## Summary
 

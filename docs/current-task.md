@@ -1,24 +1,16 @@
 ## Current feature:
 
-- Plan: เปลี่ยน Board Owner-Only เป็น Workspace Collaboration ตาม `docs/workspace-plan-th.md`
+- Plan: system-managed workspace provisioning + workspace-scoped board collaboration ตาม `docs/workspace-plan-th-v2.md`
 
 ## Completed:
 
-- เพิ่ม model workspace แล้ว
+- Workspace schema ใช้ต่อได้แล้ว
   - เพิ่มตาราง `workspaces`
   - เพิ่มตาราง `workspace_members`
   - ใช้ workspace roles `owner`, `admin`, `member`
   - เพิ่ม type `WorkspaceMember`
 
-- เพิ่ม permission helpers ฝั่ง server แล้ว
-  - `getWorkspaceMember(workspaceId, userId)`
-  - `requireWorkspaceAccess(workspaceId)`
-  - `requireWorkspaceRole(workspaceId, "admin")`
-  - `requireWorkspaceRole(workspaceId, ["owner", "admin"])`
-  - `requireBoardAccess(boardId)`
-  - `requireBoardAdminAccess(boardId)`
-
-- จัดการ schema และ migration ของ board ownership แล้ว
+- Board ownership migration ใช้ต่อได้แล้ว
   - ลบ `boards.userId`
   - เพิ่ม `boards.workspaceId`
   - เพิ่ม foreign key ไปที่ `workspaces.id`
@@ -28,11 +20,20 @@
   - update `migrations/meta/_journal.json`
   - migrate ขึ้น NeonDB แล้ว
 
-- ปิดงาน RBAC ฝั่ง server สำหรับ board domain แล้ว
+- Permission helpers ฝั่ง server ใช้ได้บางส่วน
+  - `getWorkspaceMember(workspaceId, userId)`
+  - `requireWorkspaceAccess(workspaceId)`
+  - `requireWorkspaceRole(workspaceId, "admin")`
+  - `requireWorkspaceRole(workspaceId, ["owner", "admin"])`
+  - `requireBoardAccess(boardId)`
+  - `requireBoardAdminAccess(boardId)`
+  - หมายเหตุ: `requireBoardAdminAccess(boardId)` ยังต้อง refactor ตาม policy V2 เพราะตอนนี้ยังครอบ `owner | admin` สำหรับ action ที่ควรแยก owner-only เช่น `deleteBoard`
+
+- Board domain integration ใช้ได้ต่อบางส่วน
   - `trpc/server/routers/board.ts`
     - `createBoard` รับ `workspaceId`
     - `createBoard` บังคับ `requireWorkspaceRole(workspaceId, ["owner", "admin"])`
-    - `updateBoard` และ `deleteBoard` ใช้ `requireBoardAdminAccess(boardId)`
+    - `updateBoard` และ `deleteBoard` ยังใช้ `requireBoardAdminAccess(boardId)` อยู่ และต้องแยก policy ต่อ
   - `trpc/server/routers/list.ts`
     - เปลี่ยน action หลักไปใช้ `requireBoardAccess(boardId)`
   - `trpc/server/routers/card.ts`
@@ -64,17 +65,36 @@
   - `board.createBoard` รองรับ `workspaceId`
   - `pages.boardIdPage` เปลี่ยน response shape เป็น `{ board, logs }`
 
-- ยังไม่ได้ทำในรอบนี้:
-  - manual verification ของ multi-user workspace flow
+- ยังไม่ได้ทำ:
+  - manual verification ตาม policy V2 ของ `owner` / `admin` / `member`
+  - system management flow สำหรับ workspace
+  - หน้า `/admin/workspaces`
+  - system-role gate สำหรับ workspace management ของ `admin` / `manager`
 
 ## Next:
 
 - Focus ถัดไป:
-  - manual verify flow ตาม role `owner` / `admin` / `member`
-  - ปรับ UI dashboard/board ให้แสดงบริบท workspace ชัดขึ้นถ้าต้องการ
-  - เริ่ม workspace feature รอบถัดไป เช่น invite flow, workspace router, workspace switcher
+  - เพิ่ม workspace management UI ที่ `/admin/workspaces`
+  - เพิ่ม workspace router/procedures สำหรับ:
+    - `workspace.adminList`
+    - `workspace.create`
+    - `workspace.getById`
+    - `workspace.addMember`
+    - `workspace.changeMemberRole`
+    - `workspace.removeMember`
+  - เพิ่ม system-level permission check สำหรับ `admin` / `manager` ก่อนเข้าหน้าและก่อนเรียก procedures
+  - ปรับ board RBAC ให้ตรง policy V2:
+    - `createBoard` = `owner | admin`
+    - `updateBoard` = `owner | admin`
+    - `deleteBoard` = `owner` only
+  - ปรับ dashboard/board UI ให้สะท้อน capability ตาม role ถ้าต้องการ
+  - ทำ manual verification รอบใหม่ตาม policy V2 หลังจาก flow หลักพร้อม
 
-- ยังไม่ focus รอบนี้:
-  - UI workspace switcher แบบเต็ม
-  - invite flow
-  - workspace router ชุดเต็ม
+## Not focus this round:
+
+- invite flow
+- accept invite
+- token-based join
+- workspace self-service management โดย workspace owner/admin
+- full workspace switcher UI
+- email-based onboarding เข้า workspace

@@ -4,7 +4,8 @@
 
 - docs/architecture.md — โครงสร้างระบบ, data model, RBAC
 - docs/current-task.md — งานปัจจุบัน, สิ่งที่เสร็จแล้ว, next step
-- docs/workspace-plan-th.md - แผนงานปัจจุบัน
+- docs/workspace-plan-th.md - แผนเก่า Status: Deprecated
+- docs/workspace-plan-th-v2.md - แผนใหม่
 
 ## Project Structure & Module Organization
 
