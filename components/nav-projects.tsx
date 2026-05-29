@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Folder,
@@ -6,7 +6,7 @@ import {
   MoreHorizontal,
   Trash2,
   type LucideIcon,
-} from "lucide-react";
+} from 'lucide-react';
 
 import {
   DropdownMenu,
@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -23,28 +23,30 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
-} from "@/components/ui/sidebar";
-import { usePathname } from "next/navigation";
+} from '@/components/ui/sidebar';
+import { usePathname } from 'next/navigation';
 
 export function NavProjects({
   projects,
+  label,
 }: {
   projects: {
     name: string;
     url: string;
     icon: LucideIcon;
   }[];
+  label: string;
 }) {
   const { isMobile } = useSidebar();
   const pathname = usePathname();
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Boards Management</SidebarGroupLabel>
+      <SidebarGroupLabel>{label}</SidebarGroupLabel>
       <SidebarMenu>
         {projects.map((item) => {
           const isBoardDetail =
-            item.url === "/dashboard" && pathname.startsWith("/boards/");
+            item.url === '/dashboard' && pathname.startsWith('/boards/');
           const isActive =
             pathname === item.url ||
             pathname.startsWith(`${item.url}/`) ||
@@ -54,7 +56,7 @@ export function NavProjects({
               <SidebarMenuButton asChild>
                 <a
                   href={item.url}
-                  className={isActive ? "bg-blue-100 rounded-2xl" : ""}
+                  className={isActive ? 'bg-blue-100 rounded-2xl' : ''}
                 >
                   <item.icon />
                   <span>{item.name}</span>

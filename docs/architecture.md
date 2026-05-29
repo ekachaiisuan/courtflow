@@ -71,7 +71,11 @@ board_actions                          # actor log — ไม่ใช่ owners
 
 ---
 
-## RBAC
+## RBAC V1
+
+# Status : Deprecated
+
+# Reason : มีการเปลี่ยนแปลงให้ admin,manager ในระดับ system เป็นผู้ดูแล workspace แทน
 
 | Action                      | owner | admin | member |
 | --------------------------- | :---: | :---: | :----: |
@@ -105,8 +109,18 @@ requireBoardAdminAccess(boardId, userId)  // owner | admin เท่านั้
 
 ---
 
-## Session Goal
+## Session Goal V 1
+
+# Status : Deprecated
+
+# Reason : เปลี่ยนจาก board workspaces Collaboration เป็น admin ของ system ดูแล workspace แทน
 
 - ทำให้ระบบบริหารจัดการ board จากเดิม board owner only เป็น board workspaces Collaboration โดยเน้นความปลอดภัยของการรับส่งข้อมูล
+
+---
+
+## Session Goal V 2
+
+- ทำให้ระบบบริหารจัดการ board จากเดิม board owner only เป็น board workspaces ที่ admin,manager ของ role system ดูแล โดยเน้นความปลอดภัยของการรับส่งข้อมูล
 
 ---
