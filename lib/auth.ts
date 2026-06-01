@@ -5,11 +5,13 @@ import { nextCookies } from 'better-auth/next-js';
 import { Resend } from 'resend';
 import VerifyEmail from '@/components/email/verify-email';
 import ResetPasswordEmail from '@/components/email/reset-password';
-import { createAuthMiddleware } from 'better-auth/api';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import WelcomeEmail from '@/components/email/welcome-email';
 import { twoFactor, admin as adminPlugin } from 'better-auth/plugins';
 import { ac, admin, user, officer, manager } from '@/lib/permissions';
 import * as authSchema from '@/db/schema/auth';
+import { workspaceMembers, workspaces } from '@/db/schema/workspace';
+import { and, eq } from 'drizzle-orm';
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
@@ -21,7 +23,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
-    sendResetPassword: async ({ user, url }, request) => {
+    sendResetPassword: async ({ user, url }) => {
       await resend.emails.send({
         from: `admin <${process.env.EMAIL_FROM!}>`,
         to: user.email,
@@ -34,7 +36,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendVerificationEmail: async ({ user, url }, request) => {
+    sendVerificationEmail: async ({ user, url }) => {
       await resend.emails.send({
         from: `admin <${process.env.EMAIL_FROM!}>`,
         to: user.email,
@@ -61,6 +63,48 @@ export const auth = betterAuth({
     },
   },
   hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== '/admin/ban-user' && ctx.path !== '/admin/remove-user') {
+        return;
+      }
+
+      const targetUserId = ctx.body?.userId;
+
+      if (!targetUserId || typeof targetUserId !== 'string') {
+        return;
+      }
+
+      const ownedWorkspace = await db.query.workspaceMembers.findFirst({
+        where: and(
+          eq(workspaceMembers.userId, targetUserId),
+          eq(workspaceMembers.role, 'owner'),
+        ),
+      });
+
+      if (ownedWorkspace) {
+        throw new APIError('BAD_REQUEST', {
+          message:
+            ctx.path === '/admin/ban-user'
+              ? 'Transfer workspace ownership before banning this workspace owner'
+              : 'Transfer workspace ownership before deleting this workspace owner',
+        });
+      }
+
+      if (ctx.path !== '/admin/remove-user') {
+        return;
+      }
+
+      const createdWorkspace = await db.query.workspaces.findFirst({
+        where: eq(workspaces.createdBy, targetUserId),
+      });
+
+      if (createdWorkspace) {
+        throw new APIError('BAD_REQUEST', {
+          message:
+            'Cannot delete user because they created one or more workspaces. Use ban or suspend instead.',
+        });
+      }
+    }),
     after: createAuthMiddleware(async (ctx) => {
       if (ctx.path.startsWith('/signup')) {
         const user = ctx.context.newSession?.user ?? {

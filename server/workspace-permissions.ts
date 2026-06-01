@@ -10,7 +10,9 @@ import {
   type WorkspaceRole,
   type WorkspaceMember,
 } from '@/db/schema/workspace';
+import { auth } from '@/lib/auth';
 import { authSession } from '@/server/user';
+import { headers } from 'next/headers';
 
 // Internal guard for board-scoped permission checks.
 // This helper intentionally returns a generic FORBIDDEN error when the board
@@ -107,10 +109,34 @@ export async function requireWorkspaceRole(
   return member;
 }
 
+export async function requireSystemWorkspaceManager(): Promise<void> {
+  const hasPermission = await auth.api.userHasPermission({
+    headers: await headers(),
+    body: {
+      permission: { workspace: ['member-manage'] },
+    },
+  });
+
+  if (!hasPermission.success) {
+    throw new TRPCError({
+      code: 'FORBIDDEN',
+      message: 'User does not have permission to manage workspaces',
+    });
+  }
+}
+
 export async function requireBoardAdminAccess(boardId: string): Promise<Board> {
   const board = await requireBoard(boardId);
 
   await requireWorkspaceRole(board.workspaceId, ['owner', 'admin']);
+
+  return board;
+}
+
+export async function requireBoardOwnerAccess(boardId: string): Promise<Board> {
+  const board = await requireBoard(boardId);
+
+  await requireWorkspaceRole(board.workspaceId, 'owner');
 
   return board;
 }

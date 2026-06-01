@@ -15,6 +15,13 @@
       "when": 1779701705038,
       "tag": "0001_boards_workspace_owner",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780287598170,
+      "tag": "0002_windy_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

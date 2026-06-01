@@ -2,6 +2,7 @@ import { boardAction, boards } from '@/db/schema';
 import { uuid } from '@/lib/uuid';
 import {
   requireBoardAdminAccess,
+  requireBoardOwnerAccess,
   requireWorkspaceRole,
 } from '@/server/workspace-permissions';
 import { createTRPCRouter, protectedProcedure } from '@/trpc/server/init';
@@ -48,7 +49,6 @@ export const BoardRouter = createTRPCRouter({
         });
       }
     }),
-  // owner is the user who deletes the board
   deleteBoard: protectedProcedure
     .input(
       z.object({

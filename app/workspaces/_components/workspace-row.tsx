@@ -7,6 +7,7 @@ import type { workspaces } from '@/db/schema';
 
 type Workspace = typeof workspaces.$inferSelect & {
   memberCount: number;
+  ownerName: string;
 };
 
 type WorkspaceRowProps = {
@@ -17,7 +18,7 @@ export function WorkspaceRow({ workspace }: WorkspaceRowProps) {
   return (
     <TableRow>
       <TableCell className="font-medium">{workspace.name}</TableCell>
-      <TableCell className="font-medium">{workspace.createdBy}</TableCell>
+      <TableCell className="font-medium">{workspace.ownerName}</TableCell>
       <TableCell>{workspace.memberCount}</TableCell>
       <TableCell className="text-muted-foreground">
         {workspace.createdAt.toLocaleDateString()}

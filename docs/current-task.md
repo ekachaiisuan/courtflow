@@ -9,6 +9,8 @@
   - เพิ่มตาราง `workspace_members`
   - ใช้ workspace roles `owner`, `admin`, `member`
   - เพิ่ม type `WorkspaceMember`
+  - เพิ่ม single-owner policy ด้วย partial unique index บน `workspace_members`
+  - เพิ่ม `workspace_audit_logs` สำหรับ log การ transfer owner
 
 - Board ownership migration ใช้ต่อได้แล้ว
   - ลบ `boards.userId`
@@ -25,15 +27,24 @@
   - `requireWorkspaceAccess(workspaceId)`
   - `requireWorkspaceRole(workspaceId, "admin")`
   - `requireWorkspaceRole(workspaceId, ["owner", "admin"])`
+  - `requireSystemWorkspaceManager()`
   - `requireBoardAccess(boardId)`
   - `requireBoardAdminAccess(boardId)`
-  - หมายเหตุ: `requireBoardAdminAccess(boardId)` ยังต้อง refactor ตาม policy V2 เพราะตอนนี้ยังครอบ `owner | admin` สำหรับ action ที่ควรแยก owner-only เช่น `deleteBoard`
+  - `requireBoardOwnerAccess(boardId)`
+  - เพิ่ม `requireBoardOwnerAccess(boardId)` สำหรับ action owner-only 
+
+- System account guard ใช้ได้บางส่วน
+  - `banUser` ถูก block ถ้า target user ยังเป็น workspace `owner`
+  - `removeUser` ถูก block ถ้า target user ยังเป็น workspace `owner`
+  - `removeUser` ถูก block ถ้า target user ถูกอ้างอิงใน `workspaces.createdBy`
+  - policy หลักคือใช้ ban/suspend แทน hard delete เมื่อสมาชิกออกจากองค์กร
 
 - Board domain integration ใช้ได้ต่อบางส่วน
   - `trpc/server/routers/board.ts`
     - `createBoard` รับ `workspaceId`
     - `createBoard` บังคับ `requireWorkspaceRole(workspaceId, ["owner", "admin"])`
-    - `updateBoard` และ `deleteBoard` ยังใช้ `requireBoardAdminAccess(boardId)` อยู่ และต้องแยก policy ต่อ
+    - `updateBoard` ใช้ `requireBoardAdminAccess(boardId)`
+    - `deleteBoard` ใช้ `requireBoardAdminAccess(boardId)`
   - `trpc/server/routers/list.ts`
     - เปลี่ยน action หลักไปใช้ `requireBoardAccess(boardId)`
   - `trpc/server/routers/card.ts`
@@ -68,25 +79,24 @@
 - ยังไม่ได้ทำ:
   - manual verification ตาม policy V2 ของ `owner` / `admin` / `member`
   - system management flow สำหรับ workspace
-  - หน้า `/admin/workspaces`
   - system-role gate สำหรับ workspace management ของ `admin` / `manager`
 
 ## Next:
 
 - Focus ถัดไป:
-  - เพิ่ม workspace management UI ที่ `/admin/workspaces`
-  - เพิ่ม workspace router/procedures สำหรับ:
+  - workspace router/procedures ใช้ได้แล้วสำหรับ:
     - `workspace.adminList`
     - `workspace.create`
     - `workspace.getById`
     - `workspace.addMember`
     - `workspace.changeMemberRole`
     - `workspace.removeMember`
+    - `workspace.transferOwner`
   - เพิ่ม system-level permission check สำหรับ `admin` / `manager` ก่อนเข้าหน้าและก่อนเรียก procedures
-  - ปรับ board RBAC ให้ตรง policy V2:
+  - ตรวจ/ต่อยอด board RBAC ตาม policy V2:
     - `createBoard` = `owner | admin`
     - `updateBoard` = `owner | admin`
-    - `deleteBoard` = `owner` only
+    - `deleteBoard` = `owner | admin`
   - ปรับ dashboard/board UI ให้สะท้อน capability ตาม role ถ้าต้องการ
   - ทำ manual verification รอบใหม่ตาม policy V2 หลังจาก flow หลักพร้อม
 
