@@ -95,6 +95,7 @@
 - ใช้ "use client" เฉพาะเมื่อจำเป็นจริง ๆ (เช่น interactive UI, event handler)
 - ห้าม query database จาก Client Component
 - ใช้ trpc ในส่วนของ Business logic
+- Neon Database แบบ HTTP (neon-http driver) ไม่รองรับการทำงานแบบ Transaction
 
 ## Project Trello Clone
 

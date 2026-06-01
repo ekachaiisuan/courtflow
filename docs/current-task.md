@@ -77,7 +77,7 @@
   - `pages.boardIdPage` เปลี่ยน response shape เป็น `{ board, logs }`
 
 - ยังไม่ได้ทำ:
-  - manual verification ตาม policy V2 ของ `owner` / `admin` / `member`
+  - [ ] ทำ Manual Verification ตาม policy V2 ของ `owner` / `admin` / `member` (เตรียม Checklist ไว้แล้วใน `docs/manual-verification-v2.md`)
   - system management flow สำหรับ workspace
   - system-role gate สำหรับ workspace management ของ `admin` / `manager`
 

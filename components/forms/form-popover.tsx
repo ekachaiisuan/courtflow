@@ -11,6 +11,8 @@ interface FormPopoverProps {
   prompt: string;
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 export const FormPopover = ({
   align,
@@ -21,10 +23,12 @@ export const FormPopover = ({
   prompt,
   side="bottom",
   sideOffset=0,
+  open,
+  onOpenChange,
 }: FormPopoverProps) => {
     const closeRef = React.useRef<HTMLButtonElement>(null);
     return disabled ? (
-        <Popover>
+        <Popover open={open} onOpenChange={onOpenChange}>
           <PopoverTrigger asChild>
             {children}
           </PopoverTrigger>
@@ -35,7 +39,7 @@ export const FormPopover = ({
           </PopoverContent>
         </Popover>
     ) : (
-            <Popover>
+            <Popover open={open} onOpenChange={onOpenChange}>
           <PopoverTrigger asChild>
             {children}
           </PopoverTrigger>

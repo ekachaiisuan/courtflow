@@ -75,19 +75,17 @@ export const WorkspaceRouter = createTRPCRouter({
 
       const workspaceId = uuid();
 
-      await ctx.db.transaction(async (tx) => {
-        await tx.insert(workspaces).values({
-          id: workspaceId,
-          name: input.name,
-          createdBy: ctx.user.id,
-        });
+      await ctx.db.insert(workspaces).values({
+        id: workspaceId,
+        name: input.name,
+        createdBy: ctx.user.id,
+      });
 
-        await tx.insert(workspaceMembers).values({
-          id: uuid(),
-          workspaceId,
-          userId: input.ownerUserId,
-          role: 'owner',
-        });
+      await ctx.db.insert(workspaceMembers).values({
+        id: uuid(),
+        workspaceId,
+        userId: input.ownerUserId,
+        role: 'owner',
       });
 
       return { workspaceId };
@@ -291,43 +289,49 @@ export const WorkspaceRouter = createTRPCRouter({
         });
       }
 
-      await ctx.db.transaction(async (tx) => {
-        await tx
+      await ctx.db
+        .update(workspaceMembers)
+        .set({ role: 'admin' satisfies WorkspaceRole })
+        .where(eq(workspaceMembers.id, oldOwner.id));
+
+      const existingNewOwnerMember =
+        await ctx.db.query.workspaceMembers.findFirst({
+          where: and(
+            eq(workspaceMembers.workspaceId, input.workspaceId),
+            eq(workspaceMembers.userId, input.newOwnerUserId),
+          ),
+        });
+
+      if (existingNewOwnerMember) {
+        await ctx.db
           .update(workspaceMembers)
-          .set({ role: 'admin' satisfies WorkspaceRole })
-          .where(eq(workspaceMembers.id, oldOwner.id));
-
-        const existingNewOwnerMember =
-          await tx.query.workspaceMembers.findFirst({
-            where: and(
-              eq(workspaceMembers.workspaceId, input.workspaceId),
-              eq(workspaceMembers.userId, input.newOwnerUserId),
-            ),
-          });
-
-        if (existingNewOwnerMember) {
-          await tx
-            .update(workspaceMembers)
-            .set({ role: 'owner' satisfies WorkspaceRole })
-            .where(eq(workspaceMembers.id, existingNewOwnerMember.id));
-        } else {
-          await tx.insert(workspaceMembers).values({
-            id: uuid(),
-            workspaceId: input.workspaceId,
-            userId: input.newOwnerUserId,
-            role: 'owner',
-          });
-        }
-
-        await tx.insert(workspaceAuditLogs).values({
+          .set({ role: 'owner' satisfies WorkspaceRole })
+          .where(eq(workspaceMembers.id, existingNewOwnerMember.id));
+      } else {
+        await ctx.db.insert(workspaceMembers).values({
           id: uuid(),
           workspaceId: input.workspaceId,
-          event: 'workspace.owner_transferred',
-          oldOwnerUserId: oldOwner.userId,
-          newOwnerUserId: input.newOwnerUserId,
-          actorUserId: ctx.user.id,
-          reason: input.reason ?? null,
+          userId: input.newOwnerUserId,
+          role: 'owner',
         });
+      }
+
+      await ctx.db.insert(workspaceAuditLogs).values({
+        id: uuid(),
+        workspaceId: input.workspaceId,
+        event: 'workspace.owner_transferred',
+        oldOwnerUserId: oldOwner.userId,
+        newOwnerUserId: input.newOwnerUserId,
+        actorUserId: ctx.user.id,
+        reason: input.reason ?? null,
       });
     }),
+
+  listActiveUsers: protectedProcedure.query(async ({ ctx }) => {
+    await requireSystemWorkspaceManager();
+    return ctx.db.query.user.findMany({
+      where: eq(user.banned, false),
+      orderBy: (user, { asc }) => [asc(user.name)],
+    });
+  }),
 });
